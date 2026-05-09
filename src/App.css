@@ -1,0 +1,65 @@
+/* Base styles */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Main App container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f8f9fa;
+}
+
+/* Top control bar */
+.control-bar {
+  padding: 10px 15px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.control-bar h1 {
+  font-size: 1.2em;
+  margin: 0;
+  margin-right: 15px;
+  color: #333;
+}
+
+/* Let the ReactFlow component fill the rest of the space */
+.react-flow-wrapper {
+  flex-grow: 1;
+}
+
+/* Button styles */
+button {
+  font-size: 14px;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background-color: #646cff;
+  color: white;
+  transition: all 0.25s;
+  font-weight: 500;
+}
+
+button:hover {
+  background-color: #535bf2;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background-color: #999;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import ReactFlow, {
   useNodesState,
   useEdgesState,
@@ -6,241 +6,45 @@ import ReactFlow, {
   reconnectEdge,
   Controls,
   Background,
-  Panel,
-  useReactFlow,
-  Handle,
-  Position,
   type Connection,
   type Edge,
   type Node,
+  type ReactFlowInstance,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
 import { MusicNode } from './components/MusicNode';
 import MusicPlayer from './components/MusicPlayer';
-import type { CompiledSequence, ScheduledNode } from './components/MusicPlayer';
-import type { MusicNodeData } from './types/music';
-import { furEliseSequence } from './components/sequences';
-import * as Tone from 'tone';
+import { useAudioEngine, type CompiledSequence, type ScheduledNode } from './useAudioEngine';
+import { StartNode } from './components/StartNode';
+import { EndNode } from './components/EndNode';
+import { CanvasControls } from './components/CanvasControls';
+import { AddNodeModal } from './components/AddNodeModal';
+import { LoadExampleModal } from './components/LoadExampleModal';
+import { getSnapshot, loadSavedState, STORAGE_KEY, initialNodes, initialEdges, type AppNodeData } from './flowUtils';
 import './App.css';
-
-const StartNode = () => (
-  <div style={{ background: '#4CAF50', color: 'white', padding: '10px 20px', borderRadius: '20px', fontWeight: 'bold', border: '2px solid #388E3C', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-    Start
-    <Handle type="source" position={Position.Bottom} style={{ background: '#fff', border: '2px solid #388E3C' }} />
-  </div>
-);
-
-const EndNode = () => (
-  <div style={{ background: '#F44336', color: 'white', padding: '10px 20px', borderRadius: '20px', fontWeight: 'bold', border: '2px solid #D32F2F', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-    <Handle type="target" position={Position.Top} style={{ background: '#fff', border: '2px solid #D32F2F' }} />
-    End
-  </div>
-);
-
-// Register our custom node type
-const nodeTypes = { musicNode: MusicNode, startNode: StartNode, endNode: EndNode };
-
-/**
- * Generates a vertical layout of nodes and edges from sequence data.
- */
-function generateLayout(sequenceData: MusicNodeData[]): { nodes: Node<MusicNodeData>[], edges: Edge[] } {
-  const nodes: Node<MusicNodeData>[] = [];
-  const edges: Edge[] = [];
-  const xOffset = 260; // Aligned to 20px grid
-  const yOffset = 220; // Increased to accommodate larger default node size
-
-  nodes.push({
-    id: 'start',
-    type: 'startNode',
-    data: { sequence: '', chord: '' },
-    position: { x: xOffset + 45, y: 50 },
-  });
-
-  sequenceData.forEach((data, index) => {
-    const id = `${index + 1}`;
-    nodes.push({
-      id,
-      type: 'musicNode',
-      data,
-      position: { x: xOffset, y: index * yOffset + 150 },
-    });
-
-    if (index === 0) {
-      edges.push({ id: `e-start-${id}`, source: 'start', target: id });
-    } else {
-      edges.push({ id: `e-${index}-${id}`, source: `${index}`, target: id });
-    }
-  });
-
-  const endId = 'end';
-  nodes.push({
-    id: endId,
-    type: 'endNode',
-    data: { sequence: '', chord: '' },
-    position: { x: xOffset + 50, y: sequenceData.length * yOffset + 150 },
-  });
-  edges.push({ id: `e-${sequenceData.length}-${endId}`, source: `${sequenceData.length}`, target: endId });
-
-  return { nodes, edges };
-}
-
-const { nodes: initialNodes, edges: initialEdges } = generateLayout(furEliseSequence);
-
-const STORAGE_KEY = 'musicFlow_autosave';
-
-function getSnapshot(n: Node[], e: Edge[], b: number, v: number, l: boolean) {
-  const cleanNodes = n.map(node => {
-    const { selected, dragging, positionAbsolute, width, height, measured, ...rest } = node as any;
-    return rest;
-  });
-  const cleanEdges = e.map(edge => {
-    const { selected, ...rest } = edge as any;
-    return rest;
-  });
-  return JSON.stringify({ nodes: cleanNodes, edges: cleanEdges, bpm: b, volume: v, isLooping: l });
-}
-
-function loadSavedState() {
-  const savedState = sessionStorage.getItem(STORAGE_KEY);
-  if (savedState) {
-    try {
-      const data = JSON.parse(savedState);
-      if (data.history && data.historyIndex !== undefined) {
-        const current = JSON.parse(data.history[data.historyIndex]);
-        let maxId = 0;
-        current.nodes.forEach((n: Node) => {
-          const matches = n.id.match(/\d+/);
-          if (matches) {
-            const idNum = parseInt(matches[0], 10);
-            if (idNum > maxId) maxId = idNum;
-          }
-        });
-        return {
-          history: data.history,
-          historyIndex: data.historyIndex,
-          nodes: current.nodes,
-          edges: current.edges,
-          bpm: current.bpm || 120,
-          volume: current.volume !== undefined ? current.volume : 80,
-          isLooping: current.isLooping || false,
-          nextId: maxId + 1,
-        };
-      } else if (data.nodes && data.edges) {
-        let maxId = 0;
-        data.nodes.forEach((n: Node) => {
-          const matches = n.id.match(/\d+/);
-          if (matches) {
-            const idNum = parseInt(matches[0], 10);
-            if (idNum > maxId) maxId = idNum;
-          }
-        });
-        const historySnapshot = getSnapshot(data.nodes, data.edges, data.bpm || 120, data.volume !== undefined ? data.volume : 80, data.isLooping || false);
-        return {
-          history: [historySnapshot],
-          historyIndex: 0,
-          nodes: data.nodes,
-          edges: data.edges,
-          bpm: data.bpm || 120,
-          volume: data.volume !== undefined ? data.volume : 80,
-          isLooping: data.isLooping || false,
-          nextId: maxId + 1,
-        };
-      }
-    } catch (e) {
-      console.error("Failed to parse autosave", e);
-    }
-  }
-  
-  const defaultSnapshot = getSnapshot(initialNodes, initialEdges, 120, 80, false);
-  return {
-    history: [defaultSnapshot],
-    historyIndex: 0,
-    nodes: initialNodes,
-    edges: initialEdges,
-    bpm: 120,
-    volume: 80,
-    isLooping: false,
-    nextId: initialNodes.length + 1,
-  };
-}
 
 const initialState = loadSavedState();
 
-function CanvasControls() {
-  const { getViewport, setViewport, getNodes } = useReactFlow();
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      // Ignore if typing in an input/textarea
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable) {
-        return;
-      }
-      // Do not pan canvas if any nodes are selected (let React Flow move the node)
-      if (getNodes().some(n => n.selected)) {
-        return;
-      }
-
-      const PAN_STEP = 40;
-      const { x, y, zoom } = getViewport();
-
-      switch (e.key) {
-        case 'ArrowUp':
-          setViewport({ x, y: y + PAN_STEP, zoom });
-          e.preventDefault();
-          break;
-        case 'ArrowDown':
-          setViewport({ x, y: y - PAN_STEP, zoom });
-          e.preventDefault();
-          break;
-        case 'ArrowLeft':
-          setViewport({ x: x + PAN_STEP, y, zoom });
-          e.preventDefault();
-          break;
-        case 'ArrowRight':
-          setViewport({ x: x - PAN_STEP, y, zoom });
-          e.preventDefault();
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [getViewport, setViewport, getNodes]);
-
-  return (
-    <Panel position="top-right">
-      <div style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '15px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', color: '#333' }}>
-        <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#000' }}>Canvas Controls</h3>
-        <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.6' }}>
-          <li><strong>Arrow Keys:</strong> Pan canvas</li>
-          <li><strong>Mouse Scroll:</strong> Zoom in/out</li>
-          <li><strong>Shift + Click / Drag:</strong> Multi-select nodes</li>
-          <li><strong>Double Click Edge:</strong> Toggle connection</li>
-          <li><strong>Drag Edge:</strong> Detach & reattach</li>
-          <li><strong>Backspace / Delete:</strong> Delete selected node</li>
-          <li><strong>Ctrl + Shift + Del:</strong> Clear Canvas</li>
-          <li><strong>Ctrl + Z / Y:</strong> Undo / Redo</li>
-        </ul>
-      </div>
-    </Panel>
-  );
-}
-
 function App() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialState.nodes);
+  const nodeTypes = useMemo(() => ({ musicNode: MusicNode, startNode: StartNode, endNode: EndNode }), []);
+  const [nodes, setNodes, onNodesChange] = useNodesState<AppNodeData>(initialState.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialState.edges);
   const [compiledSequence, setCompiledSequence] = useState<CompiledSequence | null>(null);
   const nodeIdCounter = useRef(initialState.nextId);
   const edgeUpdateSuccessful = useRef(true);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isExportingAudio, setIsExportingAudio] = useState(false);
   const [bpm, setBpm] = useState(initialState.bpm);
   const [volume, setVolume] = useState(initialState.volume);
   const [isLooping, setIsLooping] = useState(initialState.isLooping);
+  const [isAutoScroll, setIsAutoScroll] = useState(true);
   const [contextMenu, setContextMenu] = useState<{ id: string, top: number, left: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [playheadState, setPlayheadState] = useState({ active: false, duration: 0 });
+  const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
+  
+  const { isLoaded, isPlaying, playSequence, stop } = useAudioEngine(volume);
 
   const historyRef = useRef<string[]>(initialState.history);
   const historyIndexRef = useRef<number>(initialState.historyIndex);
@@ -272,6 +76,15 @@ function App() {
           pb.style.transition = `width ${durationSecs}s linear`;
           pb.style.width = '100%';
         }
+
+        if (rfInstance && isAutoScroll) {
+          const node = rfInstance.getNode(nodeId);
+          if (node) {
+            const x = (node.positionAbsolute?.x ?? node.position.x) + (node.width || 170) / 2;
+            const y = (node.positionAbsolute?.y ?? node.position.y) + (node.height || 150) / 2;
+            rfInstance.setCenter(x, y, { zoom: rfInstance.getZoom(), duration: 500 });
+          }
+        }
       } else {
         el.classList.remove('playing');
         if (pb) {
@@ -280,7 +93,7 @@ function App() {
         }
       }
     }
-  }, []);
+  }, [rfInstance, isAutoScroll]);
 
   const handlePlayStateChange = useCallback((isPlaying: boolean, durationSecs: number) => {
     setPlayheadState({ active: isPlaying, duration: durationSecs });
@@ -313,13 +126,40 @@ function App() {
     setContextMenu(null);
   }, []);
 
+  const previewNode = useCallback(() => {
+    if (!contextMenu) return;
+    const node = nodes.find((n) => n.id === contextMenu.id);
+    if (!node || node.type !== 'musicNode') return;
+
+    const data = node.data as any;
+    if (!data.sequence) return;
+
+    const noteCount = data.sequence.split('\n').filter((n: string) => n.trim() !== '').length;
+    if (noteCount === 0) return;
+
+    const tempSequence: CompiledSequence = {
+      id: `preview-${Date.now()}`,
+      scheduledNodes: [{
+        id: node.id,
+        data: data,
+        startTime: 0,
+        duration: noteCount,
+        instrument: data.instrument || 'Piano'
+      }],
+      duration: noteCount
+    };
+
+    playSequence(tempSequence, bpm, false, handleNodePlay, handlePlayStateChange);
+    setContextMenu(null);
+  }, [contextMenu, nodes, bpm, playSequence, handleNodePlay, handlePlayStateChange]);
+
   const duplicateSelection = useCallback(() => {
     if (!contextMenu) return;
     const selectedNodes = nodes.filter((n) => n.selected);
     const nodesToCopy = selectedNodes.length > 0 ? selectedNodes : nodes.filter((n) => n.id === contextMenu.id);
 
     const idMap = new Map<string, string>();
-    const newNodes: Node<MusicNodeData>[] = [];
+    const newNodes: Node<AppNodeData>[] = [];
 
     nodesToCopy.forEach((nodeToCopy) => {
       let prefix = '';
@@ -508,7 +348,7 @@ function App() {
     setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
   }, [setEdges]);
 
-  const onEdgeUpdateEnd = useCallback((_: any, edge: Edge) => {
+  const onEdgeUpdateEnd = useCallback((_: MouseEvent | TouchEvent, edge: Edge) => {
     if (!edgeUpdateSuccessful.current) {
       setEdges((eds) => eds.filter((e) => e.id !== edge.id));
     }
@@ -517,50 +357,61 @@ function App() {
   }, [setEdges]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newNodeSequence, setNewNodeSequence] = useState('');
-  const [newNodeChord, setNewNodeChord] = useState('');
-  const [newNodeInstrument, setNewNodeInstrument] = useState<'Piano' | 'Guitar' | 'Flute' | 'Drums'>('Piano');
-  const [newNodeOctave, setNewNodeOctave] = useState<number>(0);
+  const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
 
   const openAddNodeModal = useCallback(() => {
-    setNewNodeSequence('');
-    setNewNodeChord('');
-    setNewNodeInstrument('Piano');
-    setNewNodeOctave(0);
     setIsAddModalOpen(true);
   }, []);
 
-  const saveNewNode = useCallback(() => {
+  const handleSaveNewNode = useCallback((data: { sequence: string; chord: string; instrument: 'Piano' | 'Guitar' | 'Flute' | 'Drums'; octave: number }) => {
     const id = `${nodeIdCounter.current++}`;
     const x = Math.round((100 + Math.random() * 400) / 20) * 20;
     const y = Math.round((100 + Math.random() * 200) / 20) * 20;
-    const newNode: Node<MusicNodeData> = {
+    const newNode: Node<AppNodeData> = {
       id,
       type: 'musicNode',
-      data: { sequence: newNodeSequence, chord: newNodeChord, instrument: newNodeInstrument, octave: newNodeOctave } as any,
+      data,
       position: { x, y },
     };
     setNodes((nds) => nds.concat(newNode));
     setIsAddModalOpen(false);
-  }, [newNodeSequence, newNodeChord, newNodeInstrument, newNodeOctave, setNodes]);
-
-  const handleModalKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      saveNewNode();
-    } else if (e.key === 'Escape') {
-      setIsAddModalOpen(false);
-    }
-  }, [saveNewNode]);
+  }, [setNodes]);
 
   const addStartNode = useCallback(() => {
     const id = `start-${nodeIdCounter.current++}`;
-    setNodes((nds) => nds.concat({ id, type: 'startNode', data: { sequence: '', chord: '' }, position: { x: Math.round((100 + Math.random() * 400) / 20) * 20, y: Math.round((50 + Math.random() * 100) / 20) * 20 } }));
+    setNodes((nds) => nds.concat({ id, type: 'startNode', data: {}, position: { x: Math.round((100 + Math.random() * 400) / 20) * 20, y: Math.round((50 + Math.random() * 100) / 20) * 20 } }));
   }, [setNodes]);
 
   const addEndNode = useCallback(() => {
     const id = `end-${nodeIdCounter.current++}`;
-    setNodes((nds) => nds.concat({ id, type: 'endNode', data: { sequence: '', chord: '' }, position: { x: Math.round((100 + Math.random() * 400) / 20) * 20, y: Math.round((300 + Math.random() * 100) / 20) * 20 } }));
+    setNodes((nds) => nds.concat({ id, type: 'endNode', data: {}, position: { x: Math.round((100 + Math.random() * 400) / 20) * 20, y: Math.round((300 + Math.random() * 100) / 20) * 20 } }));
   }, [setNodes]);
+
+  const openExampleModal = useCallback(() => {
+    setIsExampleModalOpen(true);
+  }, []);
+
+  const handleLoadExample = useCallback((data: any) => {
+    if (window.confirm("This will replace your current canvas. Load this example?")) {
+      setNodes(data.nodes);
+      setEdges(data.edges);
+      if (data.bpm) setBpm(data.bpm);
+      if (data.volume !== undefined) setVolume(data.volume);
+      if (data.isLooping !== undefined) setIsLooping(data.isLooping);
+      setCompiledSequence(null);
+      
+      let maxId = 0;
+      data.nodes.forEach((n: Node) => {
+        const matches = n.id.match(/\d+/);
+        if (matches) {
+          const idNum = parseInt(matches[0], 10);
+          if (idNum > maxId) maxId = idNum;
+        }
+      });
+      nodeIdCounter.current = maxId + 1;
+      setIsExampleModalOpen(false);
+    }
+  }, [setNodes, setEdges]);
 
   const clearCanvas = useCallback(() => {
     if (window.confirm("Are you sure you want to clear the canvas?")) {
@@ -607,6 +458,35 @@ function App() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, [nodes, edges, bpm, volume, isLooping]);
+
+  const handleExportAudio = useCallback(async () => {
+    if (!compiledSequence) {
+      alert("Please compile the sequence first before exporting audio.");
+      return;
+    }
+    setIsExportingAudio(true);
+    
+    // Yield to the browser to ensure the overlay renders before heavy audio processing
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    try {
+      const { renderSequenceToWav } = await import('./audioExporter');
+      const wavBlob = await renderSequenceToWav(compiledSequence, bpm, volume);
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `musicflow-audio-${Date.now()}.wav`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Audio export failed:", err);
+      alert("Failed to export audio. Check the console for more details.");
+    } finally {
+      setIsExportingAudio(false);
+    }
+  }, [compiledSequence, bpm, volume]);
 
   const importSequence = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -750,6 +630,11 @@ function App() {
       return;
     }
 
+    if (totalDuration === 0) {
+      alert("The sequence contains no notes. Please add some notes to a Music node before compiling.");
+      return;
+    }
+
     const newSequence: CompiledSequence = {
       id: `sequence-${Date.now()}`,
       scheduledNodes,
@@ -818,6 +703,39 @@ function App() {
           0% { left: 0%; }
           100% { left: 100%; }
         }
+        .example-item {
+          padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s;
+          font-size: 14px;
+        }
+        .example-item:hover {
+          background: #f0f0f0;
+        }
+        .export-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0, 0, 0, 0.85);
+          z-index: 2000;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          color: white;
+        }
+        .export-progress-container {
+          width: 300px; height: 6px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 3px; margin-top: 15px;
+          overflow: hidden; position: relative;
+        }
+        .export-progress-bar {
+          position: absolute; top: 0; bottom: 0; width: 40%;
+          background: #4CAF50; border-radius: 3px;
+          animation: exportLoading 1s infinite ease-in-out;
+        }
+        @keyframes exportLoading {
+          0% { left: -40%; }
+          100% { left: 100%; }
+        }
       `}</style>
       <div className="control-bar">
         <h1>MusicFlow</h1>
@@ -833,56 +751,53 @@ function App() {
           <label htmlFor="loop" style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>Loop:</label>
           <input id="loop" type="checkbox" checked={isLooping} onChange={e => setIsLooping(e.target.checked)} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '10px' }} title="Automatically pan to the playing node">
+          <label htmlFor="autoscroll" style={{ fontWeight: 'bold', fontSize: '14px', color: '#333', cursor: 'pointer' }}>Auto-scroll:</label>
+          <input id="autoscroll" type="checkbox" checked={isAutoScroll} onChange={e => setIsAutoScroll(e.target.checked)} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+        </div>
         <input type="file" accept=".json" ref={fileInputRef} style={{ display: 'none' }} onChange={importSequence} />
-        <button onClick={undo} disabled={!canUndo} title="Ctrl+Z">↩ Undo</button>
-        <button onClick={redo} disabled={!canRedo} title="Ctrl+Y / Ctrl+Shift+Z">↪ Redo</button>
-        <button onClick={() => fileInputRef.current?.click()}>Import</button>
-        <button onClick={exportSequence}>Export</button>
-        <button onClick={addStartNode}>+ Start</button>
-        <button onClick={openAddNodeModal}>+ Music</button>
-        <button onClick={addEndNode}>+ End</button>
-        <button onClick={clearCanvas}>Clear Canvas</button>
-        <button onClick={compileSequence}>Compile Sequence</button>
-        {compiledSequence && <MusicPlayer key={compiledSequence.id} sequence={compiledSequence} onNodePlay={handleNodePlay} onPlayStateChange={handlePlayStateChange} bpm={bpm} volume={volume} isLooping={isLooping} />}
+        <button onClick={undo} disabled={!canUndo} title="Undo last action (Ctrl+Z)">↩ Undo</button>
+        <button onClick={redo} disabled={!canRedo} title="Redo last undone action (Ctrl+Y / Ctrl+Shift+Z)">↪ Redo</button>
+        <button onClick={() => fileInputRef.current?.click()} title="Import a saved sequence from a JSON file">Import</button>
+        <button onClick={exportSequence} title="Export the current sequence to a JSON file">Export JSON</button>
+        <button onClick={handleExportAudio} disabled={isExportingAudio || !compiledSequence} title="Export the compiled sequence as a .WAV audio file">
+          {isExportingAudio ? 'Exporting...' : 'Export Audio'}
+        </button>
+        <button onClick={addStartNode} title="Add a Start node to begin the sequence">+ Start</button>
+        <button onClick={openAddNodeModal} title="Add a Music node to create notes and chords">+ Music</button>
+        <button onClick={addEndNode} title="Add an End node to finish the sequence">+ End</button>
+        <button onClick={openExampleModal} title="Load an example sequence">Load Examples</button>
+        <button onClick={clearCanvas} title="Remove all nodes and edges from the canvas">Clear Canvas</button>
+        <button onClick={compileSequence} title="Compile and prepare the sequence for playback">Compile Sequence</button>
+        {compiledSequence && (
+          <MusicPlayer 
+            key={compiledSequence.id} 
+            isPlaying={isPlaying}
+            isLoaded={isLoaded}
+            onPlay={() => playSequence(compiledSequence, bpm, isLooping, handleNodePlay, handlePlayStateChange)}
+            onStop={stop} 
+          />
+        )}
       </div>
 
-      {isAddModalOpen && (
-        <div className="modal-overlay" onKeyDown={handleModalKeyDown}>
-          <div className="modal-content">
-            <h2 style={{ margin: '0 0 5px 0', color: '#333' }}>Add New Node</h2>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <label style={{ flex: 1 }}>
-                Instrument:
-                <select value={newNodeInstrument} onChange={e => setNewNodeInstrument(e.target.value as 'Piano' | 'Guitar' | 'Flute' | 'Drums')} style={{ marginTop: '5px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontFamily: 'sans-serif', width: '100%' }}>
-                  <option value="Piano">🎹 Piano</option>
-                  <option value="Guitar">🎸 Guitar</option>
-                  <option value="Flute">🌬️ Flute</option>
-                  <option value="Drums">🥁 Drums</option>
-                </select>
-              </label>
-              <label style={{ width: '80px' }}>
-                Octave:
-                <select value={newNodeOctave} onChange={e => setNewNodeOctave(Number(e.target.value))} style={{ marginTop: '5px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontFamily: 'sans-serif', width: '100%' }}>
-                  <option value="-2">-2</option>
-                  <option value="-1">-1</option>
-                  <option value="0">0</option>
-                  <option value="1">+1</option>
-                  <option value="2">+2</option>
-                </select>
-              </label>
-            </div>
-            <label>
-              Notes (e.g. C4\nE4\nG4):
-              <textarea value={newNodeSequence} onChange={e => setNewNodeSequence(e.target.value)} rows={4} placeholder="C4&#10;E4&#10;G4" />
-            </label>
-            <label>
-              Chords (e.g. C\nAm):
-              <textarea value={newNodeChord} onChange={e => setNewNodeChord(e.target.value)} rows={4} placeholder="C&#10;G&#10;Am" />
-            </label>
-            <div className="modal-actions">
-              <button onClick={() => setIsAddModalOpen(false)} style={{ background: '#ccc', color: '#333' }}>Cancel</button>
-              <button onClick={saveNewNode} title="Ctrl+Enter to save">Save & Add</button>
-            </div>
+      <AddNodeModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSave={handleSaveNewNode}
+      />
+      
+      <LoadExampleModal
+        isOpen={isExampleModalOpen}
+        onClose={() => setIsExampleModalOpen(false)}
+        onSelect={handleLoadExample}
+      />
+
+      {isExportingAudio && (
+        <div className="export-overlay">
+          <h2 style={{ margin: 0 }}>Exporting Audio...</h2>
+          <p style={{ margin: '10px 0 0 0', opacity: 0.8 }}>Please wait while Tone.js renders the sequence.</p>
+          <div className="export-progress-container">
+            <div className="export-progress-bar"></div>
           </div>
         </div>
       )}
@@ -905,6 +820,11 @@ function App() {
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          {nodes.find((n) => n.id === contextMenu.id)?.type === 'musicNode' && (
+            <div style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '14px', color: '#4CAF50', fontWeight: 'bold' }} onClick={previewNode} className="context-menu-item">
+              ▶️ Preview Node
+            </div>
+          )}
           <div style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '14px', color: '#333' }} onClick={duplicateSelection} className="context-menu-item">
             {nodes.filter((n) => n.selected).length > 1 ? '📋 Copy Chain' : '📋 Duplicate'}
           </div>
@@ -915,7 +835,7 @@ function App() {
       )}
 
       <div className={`react-flow-wrapper ${isConnecting ? 'is-connecting' : ''}`} style={{ position: 'relative' }}>
-        {playheadState.active && (
+        {playheadState.active && playheadState.duration > 0 && (
           <div 
             className="global-playhead" 
             style={{ 
@@ -940,6 +860,7 @@ function App() {
           onNodeContextMenu={onNodeContextMenu}
           onPaneClick={closeContextMenu}
           onNodeClick={closeContextMenu}
+          onInit={setRfInstance}
           nodeTypes={nodeTypes} 
           zoomOnScroll={true}
           panOnScroll={false}

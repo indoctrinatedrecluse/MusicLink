@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Import / Export**: Added the ability to serialize the canvas and download/upload JSON files.
 - **Keyboard Shortcuts**: Added shortcuts for Canvas Clearing (`Ctrl+Shift+Del`), node deletion (`Backspace`/`Delete`), and modal saving (`Ctrl+Enter`).
 - **Auto-Save & History Tracking**: Canvas state is now automatically backed up to `sessionStorage` with a 50-step Undo/Redo stack (`Ctrl+Z` / `Ctrl+Y`).
+- **Audio Export**: Added ability to render and export compiled sequences to `.wav` files using Tone.js Offline AudioContext, complete with a UI loading overlay.
+- **Example Sequences Library**: Created 12 full-arc musical examples (Classical Piano, Guitar, Flute, Drums, and Multi-instrument arrangements) accessible via a new "Load Examples" modal.
+- **Auto-Scroll Playback**: The canvas now automatically pans to follow the currently playing node, which can be toggled via the Control Bar.
+- **Single-Node Preview**: Added a "Preview Node" option to the right-click context menu to isolate and play a single music node.
+- **UI Tooltips**: Added helpful hover descriptions to all control bar buttons and canvas control shortcuts.
 
 ### Changed
 
@@ -35,9 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI Layout**: Replaced the initial static page with a dynamic application layout featuring a control bar and the main canvas.
 - **Zero-Render Audio UI**: Reworked node playback highlighting to use direct DOM manipulation, bypassing heavy React re-renders to ensure 60fps animations.
 - **Debounced Node Edits**: Typing in the `MusicNode` text areas now uses a 300ms local state debounce before updating the master React Flow graph to eliminate input lag.
+- **Global Audio Engine Refactor**: Decoupled the Tone.js audio synthesizers from the React view layer into a persistent `useAudioEngine` hook to improve performance and prevent memory leaks.
+- **Codebase Modularization**: Extracted massive `App.tsx` logic into isolated, maintainable components (`AddNodeModal`, `LoadExampleModal`, `CanvasControls`) and helper utilities (`flowUtils.ts`, `audioExporter.ts`).
+- **Expanded Examples**: Expanded default single-node examples into fully fleshed-out multi-node sequence chains to better demonstrate topological playback.
 
 ### Fixed
 
 - **Playback State**: The "Stop" button now automatically reverts to "Play" when a sequence finishes playing on its own.
 - **Module Imports**: Corrected all `type`-only imports to prevent runtime errors in the browser.
 - **Dependency Resolution**: Ensured all necessary packages (`tone`, `tonal`, `reactflow`) are correctly installed.
+- **Tab Freezing Bug**: Fixed a critical CSS lockup caused by compiling an empty sequence by validating duration and halting playback of 0-second animations.
+- **Tone.js PluckSynth Crash**: Resolved a fatal `Voice must extend Monophonic class` error by replacing the invalid `PluckSynth` with a properly configured `Tone.Synth` for the Guitar instrument.
+- **React Flow Warnings**: Fixed HMR warnings regarding `nodeTypes` by properly memoizing the object definitions in React.
+- **Cleanup**: Removed unused imports, variables, and corrected file pathing across the codebase.

@@ -1,0 +1,20 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 260, "y": 50 } },
+    { "id": "1", "type": "musicNode", "data": { "sequence": "G5\nA5\nG5\nE5\nC5\nD5\nE5\nG5", "chord": "C", "instrument": "Flute", "octave": 1 }, "position": { "x": 260, "y": 200 } },
+    { "id": "2", "type": "musicNode", "data": { "sequence": "A5\nC6\nA5\nF5\nD5\nE5\nF5\nA5", "chord": "F", "instrument": "Flute", "octave": 1 }, "position": { "x": 260, "y": 350 } },
+    { "id": "3", "type": "musicNode", "data": { "sequence": "G5\nA5\nG5\nE5\nC5\nD5\nE5\nG5", "chord": "C", "instrument": "Flute", "octave": 1 }, "position": { "x": 260, "y": 500 } },
+    { "id": "4", "type": "musicNode", "data": { "sequence": "F5\nD5\nB4\nG4\nA4\nB4\nC5\nC5", "chord": "G7", "instrument": "Flute", "octave": 1 }, "position": { "x": 260, "y": 650 } },
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 260, "y": 800 } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "1" },
+    { "id": "e2", "source": "1", "target": "2" },
+    { "id": "e3", "source": "2", "target": "3" },
+    { "id": "e4", "source": "3", "target": "4" },
+    { "id": "e5", "source": "4", "target": "end-1" }
+  ],
+  "bpm": 100,
+  "volume": 90,
+  "isLooping": true
+}

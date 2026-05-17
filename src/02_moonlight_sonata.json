@@ -1,0 +1,22 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 260, "y": 50 } },
+    { "id": "1", "type": "musicNode", "data": { "sequence": "G#3\nC#4\nE4\nG#3\nC#4\nE4\nG#3\nC#4\nE4\nG#3\nC#4\nE4", "chord": "C#m", "instrument": "Piano", "octave": 0 }, "position": { "x": 260, "y": 200 } },
+    { "id": "2", "type": "musicNode", "data": { "sequence": "A3\nC#4\nE4\nA3\nC#4\nE4\nA3\nC#4\nE4\nA3\nC#4\nE4", "chord": "A", "instrument": "Piano", "octave": 0 }, "position": { "x": 260, "y": 350 } },
+    { "id": "3", "type": "musicNode", "data": { "sequence": "F#3\nA3\nD4\nF#3\nA3\nD4\nF#3\nA3\nD4\nF#3\nA3\nD4", "chord": "D", "instrument": "Piano", "octave": 0 }, "position": { "x": 260, "y": 500 } },
+    { "id": "4", "type": "musicNode", "data": { "sequence": "G#3\nC#4\nD#4\nG#3\nC#4\nD#4\nG#3\nB3\nD#4\nG#3\nB3\nD#4", "chord": "G#7", "instrument": "Piano", "octave": 0 }, "position": { "x": 260, "y": 650 } },
+    { "id": "5", "type": "musicNode", "data": { "sequence": "G#3\nC#4\nE4\nG#3\nC#4\nE4\nG#3\nC#4\nE4\nG#3\nC#4\nE4", "chord": "C#m", "instrument": "Piano", "octave": 0 }, "position": { "x": 260, "y": 800 } },
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 260, "y": 950 } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "1" },
+    { "id": "e2", "source": "1", "target": "2" },
+    { "id": "e3", "source": "2", "target": "3" },
+    { "id": "e4", "source": "3", "target": "4" },
+    { "id": "e5", "source": "4", "target": "5" },
+    { "id": "e6", "source": "5", "target": "end-1" }
+  ],
+  "bpm": 80,
+  "volume": 75,
+  "isLooping": true
+}

@@ -1,0 +1,20 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 260, "y": 50 } },
+    { "id": "1", "type": "musicNode", "data": { "sequence": "B4\nB4\nB4\nB4\nB4\nB4\nB4\nB4", "chord": "Em", "instrument": "Piano", "octave": 0 }, "position": { "x": 260, "y": 200 } },
+    { "id": "2", "type": "musicNode", "data": { "sequence": "C5\nB4\nA4\nG4\nF#4\nE4\nD#4\nE4", "chord": "Am6", "instrument": "Piano", "octave": 0 }, "position": { "x": 260, "y": 350 } },
+    { "id": "3", "type": "musicNode", "data": { "sequence": "B4\nB4\nB4\nB4\nB4\nB4\nB4\nB4", "chord": "Em", "instrument": "Piano", "octave": 0 }, "position": { "x": 260, "y": 500 } },
+    { "id": "4", "type": "musicNode", "data": { "sequence": "A4\nG4\nF#4\nE4\nD#4\nC#4\nB3\nB3", "chord": "B7", "instrument": "Piano", "octave": 0 }, "position": { "x": 260, "y": 650 } },
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 260, "y": 800 } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "1" },
+    { "id": "e2", "source": "1", "target": "2" },
+    { "id": "e3", "source": "2", "target": "3" },
+    { "id": "e4", "source": "3", "target": "4" },
+    { "id": "e5", "source": "4", "target": "end-1" }
+  ],
+  "bpm": 60,
+  "volume": 70,
+  "isLooping": true
+}

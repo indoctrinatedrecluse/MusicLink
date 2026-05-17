@@ -1,0 +1,20 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 260, "y": 50 } },
+    { "id": "1", "type": "musicNode", "data": { "sequence": "C2\nC2\nC2\nC2", "chord": "", "instrument": "Drums", "octave": -1 }, "position": { "x": 260, "y": 200 } },
+    { "id": "2", "type": "musicNode", "data": { "sequence": "C2\nC2\nC2\nC2", "chord": "", "instrument": "Drums", "octave": -1 }, "position": { "x": 260, "y": 350 } },
+    { "id": "3", "type": "musicNode", "data": { "sequence": "C2\nC2\nC2\nC2", "chord": "", "instrument": "Drums", "octave": -1 }, "position": { "x": 260, "y": 500 } },
+    { "id": "4", "type": "musicNode", "data": { "sequence": "C2\nC2\nC2\nD2", "chord": "", "instrument": "Drums", "octave": -1 }, "position": { "x": 260, "y": 650 } },
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 260, "y": 800 } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "1" },
+    { "id": "e2", "source": "1", "target": "2" },
+    { "id": "e3", "source": "2", "target": "3" },
+    { "id": "e4", "source": "3", "target": "4" },
+    { "id": "e5", "source": "4", "target": "end-1" }
+  ],
+  "bpm": 120,
+  "volume": 95,
+  "isLooping": true
+}

@@ -1,0 +1,22 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 260, "y": 50 } },
+    { "id": "1", "type": "musicNode", "data": { "sequence": "E5\nB4\nG4\nE5\nB4\nG4\nE5\nB4\nG4\nE5\nB4\nG4", "chord": "Em", "instrument": "Guitar", "octave": 0 }, "position": { "x": 260, "y": 200 } },
+    { "id": "2", "type": "musicNode", "data": { "sequence": "D5\nB4\nG4\nC5\nB4\nG4\nB4\nB4\nG4\nA4\nB4\nG4", "chord": "Em", "instrument": "Guitar", "octave": 0 }, "position": { "x": 260, "y": 350 } },
+    { "id": "3", "type": "musicNode", "data": { "sequence": "B4\nB4\nG4\nB4\nB4\nG4\nB4\nB4\nG4\nB4\nB4\nG4", "chord": "Am", "instrument": "Guitar", "octave": 0 }, "position": { "x": 260, "y": 500 } },
+    { "id": "4", "type": "musicNode", "data": { "sequence": "C5\nB4\nG4\nB4\nB4\nG4\nA4\nB4\nG4\nG4\nB4\nG4", "chord": "B7", "instrument": "Guitar", "octave": 0 }, "position": { "x": 260, "y": 650 } },
+    { "id": "5", "type": "musicNode", "data": { "sequence": "E5\nB4\nG4\nE5\nB4\nG4\nE5\nB4\nG4\nE5\nB4\nG4", "chord": "Em", "instrument": "Guitar", "octave": 0 }, "position": { "x": 260, "y": 800 } },
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 260, "y": 950 } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "1" },
+    { "id": "e2", "source": "1", "target": "2" },
+    { "id": "e3", "source": "2", "target": "3" },
+    { "id": "e4", "source": "3", "target": "4" },
+    { "id": "e5", "source": "4", "target": "5" },
+    { "id": "e6", "source": "5", "target": "end-1" }
+  ],
+  "bpm": 90,
+  "volume": 85,
+  "isLooping": true
+}

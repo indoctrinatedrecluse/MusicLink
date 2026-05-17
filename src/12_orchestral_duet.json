@@ -1,0 +1,29 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 260, "y": 50 } },
+    { "id": "p1", "type": "musicNode", "data": { "sequence": "C4\nE4\nG4\nC5\nE5\nG5", "chord": "C", "instrument": "Piano", "octave": -1 }, "position": { "x": 160, "y": 200 } },
+    { "id": "f1", "type": "musicNode", "data": { "sequence": "C5\nD5\nE5\nF5\nG5\nA5", "chord": "", "instrument": "Flute", "octave": 1 }, "position": { "x": 360, "y": 200 } },
+    { "id": "p2", "type": "musicNode", "data": { "sequence": "G4\nB4\nD5\nG5\nB5\nD6", "chord": "G", "instrument": "Piano", "octave": -1 }, "position": { "x": 160, "y": 350 } },
+    { "id": "f2", "type": "musicNode", "data": { "sequence": "B5\nA5\nG5\nF5\nE5\nD5", "chord": "", "instrument": "Flute", "octave": 1 }, "position": { "x": 360, "y": 350 } },
+    { "id": "p3", "type": "musicNode", "data": { "sequence": "A4\nC5\nE5\nA5\nC6\nE6", "chord": "Am", "instrument": "Piano", "octave": -1 }, "position": { "x": 160, "y": 500 } },
+    { "id": "f3", "type": "musicNode", "data": { "sequence": "C5\nB4\nA4\nG4\nF4\nE4", "chord": "", "instrument": "Flute", "octave": 1 }, "position": { "x": 360, "y": 500 } },
+    { "id": "p4", "type": "musicNode", "data": { "sequence": "F4\nA4\nC5\nF5\nA5\nC6", "chord": "F", "instrument": "Piano", "octave": -1 }, "position": { "x": 160, "y": 650 } },
+    { "id": "f4", "type": "musicNode", "data": { "sequence": "A4\nB4\nC5\nD5\nE5\nF5", "chord": "", "instrument": "Flute", "octave": 1 }, "position": { "x": 360, "y": 650 } },
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 260, "y": 800 } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "p1" },
+    { "id": "e2", "source": "start-1", "target": "f1" },
+    { "id": "e3", "source": "p1", "target": "p2" },
+    { "id": "e4", "source": "f1", "target": "f2" },
+    { "id": "e5", "source": "p2", "target": "p3" },
+    { "id": "e6", "source": "f2", "target": "f3" },
+    { "id": "e7", "source": "p3", "target": "p4" },
+    { "id": "e8", "source": "f3", "target": "f4" },
+    { "id": "e9", "source": "p4", "target": "end-1" },
+    { "id": "e10", "source": "f4", "target": "end-1" }
+  ],
+  "bpm": 90,
+  "volume": 80,
+  "isLooping": true
+}

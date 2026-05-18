@@ -46,8 +46,11 @@ export function useAudioEngine(volume: number) {
 
     const onStop = () => {
       setIsPlaying(false);
-      if (callbacks.current.onNodePlay) callbacks.current.onNodePlay('CLEAR_ALL', false);
-      if (callbacks.current.onPlayStateChange) callbacks.current.onPlayStateChange(false, 0);
+      callbacks.current.onNodePlay('CLEAR_ALL', false);
+      callbacks.current.onPlayStateChange(false, 0);
+
+      // Instantly trigger the release phase for any notes currently ringing out
+      Object.values(synths.current).forEach(synth => synth.releaseAll());
     };
 
     Tone.Transport.on('stop', onStop);
@@ -61,10 +64,8 @@ export function useAudioEngine(volume: number) {
   }, []);
 
   useEffect(() => {
-    if (volume === 0) {
-      Tone.Destination.mute = true;
-    } else {
-      Tone.Destination.mute = false;
+    Tone.Destination.mute = volume === 0;
+    if (volume > 0) {
       Tone.Destination.volume.value = 20 * Math.log10(volume / 100);
     }
   }, [volume]);
@@ -99,21 +100,13 @@ export function useAudioEngine(volume: number) {
     }, 0);
 
     for (const snode of sequence.scheduledNodes) {
-      const notesInNode = snode.data.sequence.split('\n').filter((n: string) => n.trim() !== '');
-      const chordsInNode = snode.data.chord.split('\n').filter((c: string) => c.trim() !== '');
+      const notesInNode = (snode.data?.sequence || '').split('\n').filter((n: string) => n.trim() !== '');
+      const chordsInNode = (snode.data?.chord || '').split('\n').filter((c: string) => c.trim() !== '');
 
       if (notesInNode.length === 0) continue;
 
       const startSecs = snode.startTime * stepSecs;
       const nodeDurationSecs = snode.duration * stepSecs;
-
-      Tone.Transport.schedule((time) => {
-        Tone.Draw.schedule(() => callbacks.current.onNodePlay(snode.id, true, nodeDurationSecs), time);
-      }, startSecs);
-      
-      Tone.Transport.schedule((time) => {
-        Tone.Draw.schedule(() => callbacks.current.onNodePlay(snode.id, false), time);
-      }, startSecs + nodeDurationSecs);
 
       const mainChord = chordsInNode[0];
       const octaveShift = Number((snode.data as any).octave) || 0;
@@ -121,19 +114,27 @@ export function useAudioEngine(volume: number) {
 
       const activeSynth = synths.current[snode.instrument] || synths.current['Piano'];
 
-      if (mainChord) {
-        const chordData = TonalChord.get(mainChord);
-        if (!chordData.empty) {
-          const chordNotes = chordData.notes.map(n => shiftNote(`${n}3`));
-          activeSynth?.triggerAttackRelease(chordNotes, nodeDurationSecs, startSecs);
+      Tone.Transport.schedule((time) => {
+        Tone.Draw.schedule(() => callbacks.current.onNodePlay(snode.id, true, nodeDurationSecs), time);
+        
+        if (mainChord) {
+          const chordData = TonalChord.get(mainChord);
+          if (!chordData.empty) {
+            const chordNotes = chordData.notes.map(n => shiftNote(`${n}3`));
+            activeSynth?.triggerAttackRelease(chordNotes, nodeDurationSecs, time);
+          }
         }
-      }
 
-      let noteOffset = 0;
-      for (const note of notesInNode) {
-        activeSynth?.triggerAttackRelease(shiftNote(note), '8n', startSecs + noteOffset);
-        noteOffset += stepSecs;
-      }
+        let noteOffset = 0;
+        for (const note of notesInNode) {
+          activeSynth?.triggerAttackRelease(shiftNote(note), '8n', time + noteOffset);
+          noteOffset += stepSecs;
+        }
+      }, startSecs);
+      
+      Tone.Transport.schedule((time) => {
+        Tone.Draw.schedule(() => callbacks.current.onNodePlay(snode.id, false), time);
+      }, startSecs + nodeDurationSecs);
 
       maxTime = Math.max(maxTime, startSecs + nodeDurationSecs);
     }

@@ -43,12 +43,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Global Audio Engine Refactor**: Decoupled the Tone.js audio synthesizers from the React view layer into a persistent `useAudioEngine` hook to improve performance and prevent memory leaks.
 - **Codebase Modularization**: Extracted massive `App.tsx` logic into isolated, maintainable components (`AddNodeModal`, `LoadExampleModal`, `CanvasControls`) and helper utilities (`flowUtils.ts`, `audioExporter.ts`).
 - **Expanded Examples**: Expanded default single-node examples into fully fleshed-out multi-node sequence chains to better demonstrate topological playback.
+- **Audio Engine Cleanup**: Simplified volume control logic and removed redundant callback checks in the `useAudioEngine` hook.
 
 ### Fixed
 
+- **Audio Playback Replay**: Fixed an issue where playing a sequence for a second time resulted in silence by properly scheduling notes relative to the `Tone.Transport` timeline instead of the absolute `AudioContext` time.
+- **Hanging Notes**: Fixed notes continuing to ring out after pressing stop by explicitly calling `.releaseAll()` on all active synthesizers.
 - **Playback State**: The "Stop" button now automatically reverts to "Play" when a sequence finishes playing on its own.
 - **Module Imports**: Corrected all `type`-only imports to prevent runtime errors in the browser.
 - **Dependency Resolution**: Ensured all necessary packages (`tone`, `tonal`, `reactflow`) are correctly installed.
+- **Corrupted Node Crash**: Fixed a fatal app crash during playback and export caused by missing sequence or chord data on corrupted nodes.
 - **Tab Freezing Bug**: Fixed a critical CSS lockup caused by compiling an empty sequence by validating duration and halting playback of 0-second animations.
 - **Tone.js PluckSynth Crash**: Resolved a fatal `Voice must extend Monophonic class` error by replacing the invalid `PluckSynth` with a properly configured `Tone.Synth` for the Guitar instrument.
 - **React Flow Warnings**: Fixed HMR warnings regarding `nodeTypes` by properly memoizing the object definitions in React.

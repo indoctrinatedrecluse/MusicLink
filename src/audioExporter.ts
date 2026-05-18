@@ -39,8 +39,8 @@ export async function renderSequenceToWav(sequence: CompiledSequence, bpm: numbe
     };
 
     for (const snode of sequence.scheduledNodes) {
-      const notesInNode = snode.data.sequence.split('\n').filter((n: string) => n.trim() !== '');
-      const chordsInNode = snode.data.chord.split('\n').filter((c: string) => c.trim() !== '');
+      const notesInNode = (snode.data?.sequence || '').split('\n').filter((n: string) => n.trim() !== '');
+      const chordsInNode = (snode.data?.chord || '').split('\n').filter((c: string) => c.trim() !== '');
 
       if (notesInNode.length === 0) continue;
 

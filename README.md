@@ -1,73 +1,291 @@
-# React + TypeScript + Vite
+# 🎵 MusicLink (MusicFlow)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![React](https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-8.0-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![React Flow](https://img.shields.io/badge/React_Flow-11.11-FF0072?style=flat-square&logo=reactflow&logoColor=white)](https://reactflow.dev/)
+[![Tone.js](https://img.shields.io/badge/Tone.js-15.1-black?style=flat-square)](https://tonejs.github.io/)
+[![Tonal](https://img.shields.io/badge/Tonal-5.0-orange?style=flat-square)](https://github.com/tonaljs/tonal)
 
-Currently, two official plugins are available:
+**MusicLink** (in-app: **MusicFlow**) is an interactive, visual node-based audio sequencer and music composition environment. Built on top of **React**, **React Flow**, and **Tone.js**, it treats musical structures as a Directed Acyclic Graph (DAG), enabling linear melodies, branching polyphonic chords, parallel multi-instrument tracks, and modular song arrangements on an infinite digital canvas.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 📑 Table of Contents
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+  - [Visual DAG Canvas](#visual-dag-canvas)
+  - [Polyphonic DAG Sequencer & Compiler](#polyphonic-dag-sequencer--compiler)
+  - [Multi-Instrument Sound Engine](#multi-instrument-sound-engine)
+  - [Smart Graph Editing & Auto-Bridging](#smart-graph-editing--auto-bridging)
+  - [Audio & Project Export / Import](#audio--project-export--import)
+  - [Zero-Render Playback Visuals](#zero-render-playback-visuals)
+- [Architecture & Tech Stack](#-architecture--tech-stack)
+- [Project Directory Structure](#-project-directory-structure)
+- [Node & Sequence Data Format](#-node--sequence-data-format)
+- [Keyboard Shortcuts & Canvas Navigation](#-keyboard-shortcuts--canvas-navigation)
+- [Built-In Musical Examples](#-built-in-musical-examples)
+- [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation & Development](#installation--development)
+  - [Production Build](#production-build)
+  - [Code Linting](#code-linting)
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🌟 Overview
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Traditional Digital Audio Workstations (DAWs) rely strictly on linear horizontal timelines or rigid step-sequencer grids. **MusicLink** reimagines music composition as a flexible, graph-based flow:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+1. Place a **Start** node to anchor sequence execution.
+2. Connect one or more **Music Nodes** containing melodies, chord progressions, octave shifts, and instrument designations.
+3. Branch outgoing connections to trigger multiple voices, harmonies, or rhythm sections simultaneously.
+4. Merge or terminate connections into an **End** node.
+5. Click **Compile Sequence** and **Play** to hear the graph rendered in real time through Web Audio synthesizers, with active-node illumination and a sweeping global playhead.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## ⚡ Key Features
+
+### Visual DAG Canvas
+- **Infinite Zoom & Pan**: Freely explore expansive musical maps with smooth mouse-wheel zooming, click-drag panning, and dedicated arrow-key panning.
+- **Node Types**:
+  - 🟢 **Start Node**: Defines the entry point(s) of musical execution.
+  - 🎹 **Music Node**: The primary musical cell containing multi-line note sequences, underlying harmonic chords, instrument selection, octave transposition, and dynamic resizing via drag handles.
+  - 🔴 **End Node**: Defines the terminal boundary of an arrangement.
+- **Grid Snapping**: Automatically aligns nodes on a clean 20px &times; 20px grid.
+- **Auto-Scroll Tracking**: Automatically pans and centers the canvas onto the currently playing node in real time.
+
+### Polyphonic DAG Sequencer & Compiler
+- **Topological Sorting**: Evaluates the dependency tree using in-degree topological graph traversal, scheduling parallel branches simultaneously while waiting for merged paths before continuing.
+- **Reachability & Continuity Validation**: Validates that all music nodes exist on a continuous path between a `Start` and `End` node before compilation.
+- **Loop & Cycle Detection**: Proactively detects circular loops/dependencies, safeguarding the audio engine and displaying user-friendly warnings.
+- **Quantized 8th-Note Timing**: Evaluates sequence durations dynamically based on note lengths and master BPM.
+
+### Multi-Instrument Sound Engine
+- **Synthesizer Profiles**:
+  - 🎹 **Piano**: Clean polyphonic synthesizer with balanced attack, decay, and sustain.
+  - 🎸 **Guitar**: Triangle-wave synthesizer with plucked attack, extended decay, and acoustic resonance.
+  - 🌬️ **Flute**: Smooth sine-wave synthesizer with soft attack and prolonged sustain.
+  - 🥁 **Drums**: Membrane-based percussive synthesis for punchy rhythm lines.
+- **Octave Transposition**: Per-node pitch shifting from `-2` to `+2` octaves using `Tone.Frequency.transpose()`.
+- **Harmonic Chord Accompaniment**: Automatic chord parsing via **Tonal.js** (`Tonal.Chord.get`), playing harmonic beds underneath note melodies.
+- **Global Transport Controls**:
+  - Dynamic BPM adjustment (40 – 240 BPM).
+  - Decibel-scaled logarithmic master volume slider (0 – 100%).
+  - Seamless loop playback toggle.
+
+### Smart Graph Editing & Auto-Bridging
+- **Auto-Bridging**: Deleting an intermediate node or entire chain automatically bridges incoming predecessors to outgoing successors, keeping the musical chain intact.
+- **Edge Toggling**: Double-clicking an edge disables or re-enables it without destroying the connection (rendered as a faded, dashed line).
+- **Edge Reconnection**: Drag existing edge endpoints to detach and re-route connections to other nodes.
+- **Right-Click Context Menu**:
+  - ▶️ **Preview Node**: Plays a single isolated node immediately.
+  - 📋 **Duplicate / Copy Chain**: Duplicates single nodes or multi-selected node chains with internal edges preserved.
+  - 🗑️ **Delete / Delete Chain (Bridge)**: Removes selected nodes and heals the connection gaps.
+
+### Audio & Project Export / Import
+- **Direct WAV Audio Export**: Renders compiled sequences offline using `Tone.Offline` and encodes standard 16-bit PCM stereo WAV files using a built-in browser `DataView` encoder.
+- **Project Serialization (JSON)**: Save compositions to `.json` files and re-import them anytime.
+- **Automatic Session Backup**: Automatic 50-step undo/redo stack (`Ctrl+Z` / `Ctrl+Y`) continuously synchronized with `sessionStorage`.
+
+### Zero-Render Playback Visuals
+- Direct DOM manipulation via `Tone.Draw` updates node progress bars and glowing borders without triggering React component re-renders, guaranteeing smooth 60fps animations during heavy polyphonic playback.
+
+---
+
+## 🛠 Architecture & Tech Stack
+
+| Layer | Technologies | Purpose |
+| :--- | :--- | :--- |
+| **Frontend Framework** | [React 19](https://react.dev/) | Component architecture, state management, and modal lifecycle |
+| **Type Safety** | [TypeScript 6](https://www.typescriptlang.org/) | Strict typing for nodes, edges, musical abstractions, and compilation schemas |
+| **Build & Tooling** | [Vite 8](https://vitejs.dev/) | Lightning-fast HMR and ESM bundling |
+| **Graph / Canvas UI** | [React Flow 11](https://reactflow.dev/) + NodeResizer | Interactive node-based flowchart canvas, handles, and drag-and-drop routing |
+| **Audio Synthesis** | [Tone.js 15](https://tonejs.github.io/) | Web Audio framework, polyphonic synths, `Transport` scheduling, and offline rendering |
+| **Music Theory Engine** | [Tonal 5](https://github.com/tonaljs/tonal) | Pitch class analysis, chord interval parsing, and transposition |
+| **Icons & UI** | [Lucide React](https://lucide.dev/) | Vector UI iconography |
+| **Linting** | [ESLint 10](https://eslint.org/) + typescript-eslint | Code style and static analysis |
+
+---
+
+## 📁 Project Directory Structure
+
+```text
+MusicLink/
+├── public/                     # Static assets and icons (favicon)
+├── src/
+│   ├── audio/
+│   │   └── tonePlayer.ts       # Standalone graph traversal & polyphonic audio scheduler
+│   ├── components/
+│   │   ├── AddNodeModal.tsx    # Modal dialog for creating new music nodes
+│   │   ├── CanvasControls.tsx  # In-canvas HUD with navigation shortcuts
+│   │   ├── EndNode.tsx         # Red terminal anchor node
+│   │   ├── LoadExampleModal.tsx# Example sequence selector modal
+│   │   ├── MusicNode.tsx       # Core editable node with notes, chords, and progress bar
+│   │   ├── MusicPlayer.tsx     # Play/Stop transport button component
+│   │   ├── StartNode.tsx       # Green entry anchor node
+│   │   └── sequences.ts        # Reference melody sequences (Für Elise, etc.)
+│   ├── types/
+│   │   └── music.ts            # Musical data models, pitch classes, and interfaces
+│   ├── 01_fur_elise.json ...   # 12 pre-packaged example composition files
+│   ├── 12_orchestral_duet.json
+│   ├── App.css                 # Application-wide styles and animations
+│   ├── App.tsx                 # Core application state, compiler, and canvas layout
+│   ├── audioExporter.ts        # Tone.Offline WAV renderer & PCM byte encoder
+│   ├── flowUtils.ts            # Canvas serialization, sessionStorage undo/redo state
+│   ├── index.ts                # Example sequence registry
+│   ├── main.tsx                # React entrypoint
+│   └── useAudioEngine.ts       # Central audio hook managing synths and Transport
+├── eslint.config.js            # ESLint flat configuration
+├── index.html                  # HTML template
+├── package.json                # Project dependencies and npm scripts
+├── rundevserver.sh             # Bash startup helper script
+├── tsconfig.json               # TypeScript configuration
+└── vite.config.ts              # Vite configuration
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🎼 Node & Sequence Data Format
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
+Nodes and edges follow standard React Flow structures augmented with music-specific data attributes:
+
+```json
+{
+  "nodes": [
+    {
+      "id": "start-1",
+      "type": "startNode",
+      "data": {},
+      "position": { "x": 260, "y": 50 }
     },
-  },
-])
+    {
+      "id": "1",
+      "type": "musicNode",
+      "data": {
+        "sequence": "E4\nD#4\nE4\nB3\nD4\nC4\nA3",
+        "chord": "Am",
+        "instrument": "Piano",
+        "octave": 0
+      },
+      "position": { "x": 260, "y": 200 }
+    },
+    {
+      "id": "end-1",
+      "type": "endNode",
+      "data": {},
+      "position": { "x": 260, "y": 400 }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "1" },
+    { "id": "e2", "source": "1", "target": "end-1" }
+  ],
+  "bpm": 120,
+  "volume": 80,
+  "isLooping": true
+}
+```
+
+- **`sequence`**: Newline-separated list of notes (e.g. `C4`, `F#5`, `Eb3`). Each note represents an 8th-note duration.
+- **`chord`**: Chord notation (e.g. `Am`, `Cmaj7`, `G7`, `F#m`) parsed into simultaneous polyphonic harmony.
+- **`instrument`**: Instrument synth sound (`Piano`, `Guitar`, `Flute`, `Drums`).
+- **`octave`**: Numerical octave offset (`-2`, `-1`, `0`, `1`, `2`).
+
+---
+
+## ⌨️ Keyboard Shortcuts & Canvas Navigation
+
+| Shortcut | Action | Description |
+| :--- | :--- | :--- |
+| <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> | **Pan Canvas** | Moves the view smoothly across the infinite canvas |
+| <kbd>Mouse Scroll</kbd> | **Zoom In / Out** | Zooms towards the mouse cursor |
+| <kbd>Shift</kbd> + **Click / Drag** | **Multi-Select** | Box-select or click multiple nodes to group them |
+| **Double Click Edge** | **Toggle Connection** | Bypasses / disables an edge without deleting it |
+| **Drag Edge End** | **Detach & Reconnect** | Re-routes an existing wire to a new target handle |
+| <kbd>Backspace</kbd> / <kbd>Delete</kbd> | **Delete Selection** | Removes selected nodes and auto-bridges surrounding edges |
+| <kbd>Ctrl</kbd> + <kbd>Z</kbd> | **Undo** | Reverts to the previous canvas snapshot |
+| <kbd>Ctrl</kbd> + <kbd>Y</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | **Redo** | Restores the previously undone canvas action |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Delete</kbd> | **Clear Canvas** | Clears all nodes and edges after confirmation |
+| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | **Save Node Modal** | Confirms and adds node from the Add Node dialog |
+| **Right-Click Node** | **Context Menu** | Opens quick actions (Preview, Duplicate, Delete & Bridge) |
+
+---
+
+## 📚 Built-In Musical Examples
+
+MusicLink includes 12 full-arc musical examples accessible via the **Load Examples** button:
+
+1. **Fur Elise (Beethoven)** – *Piano* (Classic recurring A-section motif)
+2. **Moonlight Sonata (Beethoven)** – *Piano* (Arpeggiated C# minor movement)
+3. **Minuet in G (Bach)** – *Piano* (Baroque contrapuntal melody)
+4. **Prelude in C Major (Bach)** – *Piano* (Cascading harmonic broken chords)
+5. **Nocturne Op 9 No 2 (Chopin)** – *Piano* (Romantic expressive phrase)
+6. **Prelude in E Minor (Chopin)** – *Piano* (Descending chromatic harmony)
+7. **Spanish Romance** – *Guitar* (Traditional Iberian fingerpicking motif)
+8. **Morning Bird** – *Flute* (High-register pastoral flute phrase)
+9. **Four on the Floor** – *Drums* (Standard dance/house rhythm beat)
+10. **Rock Groove** – *Drums* (Syncopated rock kick and snare pattern)
+11. **Band Jam** – *Multi-track* (Parallel Piano, Guitar, and Drum chains playing simultaneously)
+12. **Orchestral Duet** – *Multi-track* (Harmonized Piano and Flute contrapuntal duet)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Ensure you have [Node.js](https://nodejs.org/) installed:
+- **Node.js**: v18.0.0 or later (v20+ / v22+ recommended)
+- **npm**: v9.0.0 or later
+
+### Installation & Development
+
+1. Clone the repository and navigate into the project root:
+   ```bash
+   git clone https://github.com/indoctrinatedrecluse/MusicLink.git
+   cd MusicLink
+   ```
+
+2. Install all dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the local development server:
+   ```bash
+   npm run dev
+   ```
+
+   *Alternatively, on Unix systems or Git Bash, run the automated launch script:*
+   ```bash
+   ./rundevserver.sh
+   ```
+
+4. Open your browser and navigate to the printed local URL (typically `http://localhost:5173`).
+
+### Production Build
+
+To compile a production-ready, type-checked bundle:
+
+```bash
+npm run build
+```
+
+This executes `tsc -b` to verify TypeScript typings followed by `vite build` to output optimized static assets to the `dist/` folder.
+
+To preview the production build locally:
+```bash
+npm run preview
+```
+
+### Code Linting
+
+Run ESLint to check for stylistic and TypeScript errors:
+
+```bash
+npm run lint
+```
 ```

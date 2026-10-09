@@ -1,17 +1,18 @@
 import React, { useState, useCallback } from 'react';
 import { VirtualPiano } from './VirtualPiano';
+import { INSTRUMENT_OPTIONS, type Instrument } from '../types/music';
 
 export interface AddNodeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { label?: string; sequence: string; chord: string; instrument: 'Piano' | 'Guitar' | 'Flute' | 'Drums'; octave: number }) => void;
+  onSave: (data: { label?: string; sequence: string; chord: string; instrument: Instrument; octave: number }) => void;
 }
 
 export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
   const [label, setLabel] = useState('');
   const [sequence, setSequence] = useState('');
   const [chord, setChord] = useState('');
-  const [instrument, setInstrument] = useState<'Piano' | 'Guitar' | 'Flute' | 'Drums'>('Piano');
+  const [instrument, setInstrument] = useState<Instrument>('Piano');
   const [octave, setOctave] = useState<number>(0);
   const [showPiano, setShowPiano] = useState(false);
 
@@ -59,11 +60,16 @@ export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
         <div style={{ display: 'flex', gap: '10px' }}>
           <label style={{ flex: 1 }}>
             Instrument:
-            <select value={instrument} onChange={e => setInstrument(e.target.value as 'Piano' | 'Guitar' | 'Flute' | 'Drums')} style={{ marginTop: '5px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontFamily: 'sans-serif', width: '100%' }}>
-              <option value="Piano">🎹 Piano</option>
-              <option value="Guitar">🎸 Guitar</option>
-              <option value="Flute">🌬️ Flute</option>
-              <option value="Drums">🥁 Drums</option>
+            <select
+              value={instrument}
+              onChange={e => setInstrument(e.target.value as Instrument)}
+              style={{ marginTop: '5px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontFamily: 'sans-serif', width: '100%' }}
+            >
+              {INSTRUMENT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.icon} {opt.label}
+                </option>
+              ))}
             </select>
           </label>
           <label style={{ width: '80px' }}>

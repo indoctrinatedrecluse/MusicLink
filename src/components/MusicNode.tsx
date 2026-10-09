@@ -5,15 +5,11 @@ import '@reactflow/node-resizer/dist/style.css';
 
 import { isValidNoteStep } from '../musicUtils';
 import { VirtualPiano } from './VirtualPiano';
-import type { MusicNodeData } from '../types/music';
+import { INSTRUMENT_OPTIONS, type MusicNodeData } from '../types/music';
 
-const INSTRUMENT_ICONS: Record<string, string> = {
-  Piano: '🎹',
-  Guitar: '🎸',
-  Flute: '🌬️',
-  Drums: '🥁',
-  Bass: '🎸',
-};
+const INSTRUMENT_ICONS: Record<string, string> = Object.fromEntries(
+  INSTRUMENT_OPTIONS.map(opt => [opt.value, opt.icon])
+);
 
 const nodeStyle = {
   background: '#fff',
@@ -167,10 +163,11 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
             onChange={onChange}
             style={selectStyle}
           >
-            <option value="Piano">🎹 Piano</option>
-            <option value="Guitar">🎸 Guitar</option>
-            <option value="Flute">🌬️ Flute</option>
-            <option value="Drums">🥁 Drums</option>
+            {INSTRUMENT_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>
+                {opt.icon} {opt.label}
+              </option>
+            ))}
           </select>
         </div>
         <div style={{ width: '60px' }}>

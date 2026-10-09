@@ -29,6 +29,7 @@ export interface ToolbarProps {
   onAddMusic: () => void;
   onAddEnd: () => void;
   onLoadExamples: () => void;
+  onGenerateRandomTrack: () => void;
   onClearCanvas: () => void;
   // Compilation & playback
   onCompile: () => void;
@@ -60,7 +61,7 @@ export function Toolbar({
   fileInputRef, onFileChange,
   onExportJson, onExportAudio, isExportingAudio, onExportMidi,
   onAddStart, onAddMusic, onAddEnd,
-  onLoadExamples, onClearCanvas,
+  onLoadExamples, onGenerateRandomTrack, onClearCanvas,
   onCompile, onRollVariation,
   compiledSequence, isPlaying, isLoaded, onPlay, onStop,
 }: ToolbarProps) {
@@ -159,6 +160,19 @@ export function Toolbar({
       <button onClick={onAddMusic} title="Add a Music node to create notes and chords">+ Music</button>
       <button onClick={onAddEnd} title="Add an End node to finish the sequence">+ End</button>
       <button onClick={onLoadExamples} title="Load an example sequence">Load Examples</button>
+      <button
+        onClick={onGenerateRandomTrack}
+        title="Procedurally generate a complete musical track with intelligent harmonies and orchestration"
+        style={{
+          background: 'linear-gradient(135deg, #f39c12, #e67e22)',
+          color: 'white',
+          border: 'none',
+          boxShadow: '0 2px 4px rgba(230, 126, 34, 0.3)',
+          fontWeight: 'bold',
+        }}
+      >
+        ✨ Random Track
+      </button>
       <button onClick={onClearCanvas} title="Remove all nodes and edges from the canvas">Clear Canvas</button>
 
       {/* ── Compilation & Playback ─────────────────────────────────── */}
@@ -178,15 +192,12 @@ export function Toolbar({
       >
         🎲 Roll Variation
       </button>
-      {compiledSequence && (
-        <MusicPlayer
-          key={compiledSequence.id}
-          isPlaying={isPlaying}
-          isLoaded={isLoaded}
-          onPlay={onPlay}
-          onStop={onStop}
-        />
-      )}
+      <MusicPlayer
+        isPlaying={isPlaying}
+        isLoaded={isLoaded}
+        onPlay={onPlay}
+        onStop={onStop}
+      />
     </div>
   );
 }

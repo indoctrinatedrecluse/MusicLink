@@ -1,7 +1,14 @@
 import * as Tone from 'tone';
 import { Chord as TonalChord } from 'tonal';
 import type { CompiledSequence } from './useAudioEngine';
-import { GUITAR_SYNTH_OPTIONS, FLUTE_SYNTH_OPTIONS } from './synthProfiles';
+import {
+  GUITAR_SYNTH_OPTIONS,
+  FLUTE_SYNTH_OPTIONS,
+  BASS_SYNTH_OPTIONS,
+  STRINGS_SYNTH_OPTIONS,
+  BRASS_SYNTH_OPTIONS,
+  CHIPTUNE_SYNTH_OPTIONS,
+} from './synthProfiles';
 import { parseNoteStep } from './musicUtils';
 
 export async function renderSequenceToWav(sequence: CompiledSequence, bpm: number, volume: number = 80): Promise<Blob> {
@@ -32,7 +39,11 @@ export async function renderSequenceToWav(sequence: CompiledSequence, bpm: numbe
       Piano: new Tone.PolySynth(Tone.Synth).connect(limiter),
       Guitar: new Tone.PolySynth(Tone.Synth, GUITAR_SYNTH_OPTIONS).connect(limiter),
       Flute: new Tone.PolySynth(Tone.Synth, FLUTE_SYNTH_OPTIONS).connect(limiter),
-      Drums: new Tone.PolySynth(Tone.MembraneSynth).connect(limiter)
+      Bass: new Tone.PolySynth(Tone.Synth, BASS_SYNTH_OPTIONS).connect(limiter),
+      Strings: new Tone.PolySynth(Tone.Synth, STRINGS_SYNTH_OPTIONS).connect(limiter),
+      Brass: new Tone.PolySynth(Tone.Synth, BRASS_SYNTH_OPTIONS).connect(limiter),
+      '8-Bit': new Tone.PolySynth(Tone.Synth, CHIPTUNE_SYNTH_OPTIONS).connect(limiter),
+      Drums: new Tone.PolySynth(Tone.MembraneSynth).connect(limiter),
     };
 
     const hasAnySolo = sequence.scheduledNodes.some(n => n.data?.isSoloed);

@@ -24,10 +24,24 @@ import { Toolbar } from './components/Toolbar';
 import { NodeContextMenu } from './components/NodeContextMenu';
 import { Toast, type ToastItem, type ToastType } from './components/Toast';
 import { compileGraph } from './compiler';
+import type { Instrument, MusicNodeData } from './types/music';
+import { GenerateTrackModal } from './components/GenerateTrackModal';
+import { generateRandomTrack, type GenerateTrackOptions } from './trackGenerator';
 import { getSnapshot, loadSavedState, STORAGE_KEY, type AppNodeData } from './flowUtils';
 import './App.css';
 
 const initialState = loadSavedState();
+
+function getStructuralSignature(nodes: Node<AppNodeData>[], edges: Edge[]): string {
+  const nodeParts = nodes.map(n => {
+    const data = n.data as Partial<MusicNodeData> | undefined;
+    return `${n.id}:${n.type}:${data?.sequence ?? ''}:${data?.chord ?? ''}:${data?.octave ?? 0}:${data?.instrument ?? ''}:${data?.volume ?? 100}:${data?.isMuted ?? false}:${data?.isSoloed ?? false}`;
+  }).join('|');
+  const edgeParts = edges.map(e =>
+    `${e.id}:${e.source}->${e.target}:${e.data?.disabled ?? false}:${e.data?.probability ?? 1}`
+  ).join('|');
+  return `${nodeParts}#${edgeParts}`;
+}
 
 function App() {
   const nodeTypes = useMemo(() => ({ musicNode: MusicNode, startNode: StartNode, endNode: EndNode }), []);
@@ -348,13 +362,13 @@ function App() {
     return () => clearTimeout(timer);
   }, [nodes, edges, bpm, volume, isLooping]);
 
-  // Improvement 4: Invalidate the compiled sequence whenever the canvas structure
-  // changes so the Play button disappears, forcing an explicit re-compile.
-  // BPM / volume / loop changes are intentionally excluded — those are passed as
-  const [prevGraphState, setPrevGraphState] = useState({ nodes, edges });
-  if (nodes !== prevGraphState.nodes || edges !== prevGraphState.edges) {
-    setPrevGraphState({ nodes, edges });
-    if (compiledSequence !== null) {
+  // Invalidate compiled sequence only when actual musical structure or routing changes.
+  // Selection, node dragging/dimensions, and active playback do NOT destroy the sequence or Stop button.
+  const [prevGraphSig, setPrevGraphSig] = useState(() => getStructuralSignature(nodes, edges));
+  const currentGraphSig = getStructuralSignature(nodes, edges);
+  if (currentGraphSig !== prevGraphSig) {
+    setPrevGraphSig(currentGraphSig);
+    if (!isPlaying && compiledSequence !== null) {
       setCompiledSequence(null);
     }
     if (errorNodeIds.length > 0) {
@@ -470,7 +484,7 @@ function App() {
     setIsAddModalOpen(true);
   }, []);
 
-  const handleSaveNewNode = useCallback((data: { label?: string; sequence: string; chord: string; instrument: 'Piano' | 'Guitar' | 'Flute' | 'Drums'; octave: number }) => {
+  const handleSaveNewNode = useCallback((data: { label?: string; sequence: string; chord: string; instrument: Instrument; octave: number }) => {
     const id = `${nodeIdCounter.current++}`;
     const x = Math.round((100 + Math.random() * 400) / 20) * 20;
     const y = Math.round((100 + Math.random() * 200) / 20) * 20;
@@ -723,6 +737,76 @@ function App() {
     );
   }, [nodes, edges, rfInstance, showToast]);
 
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+
+  const handleGenerateTrack = useCallback((options: GenerateTrackOptions) => {
+    const generated = generateRandomTrack(options);
+    setNodes(generated.nodes);
+    setEdges(generated.edges);
+    setBpm(generated.bpm);
+    setCompiledSequence(null);
+    setErrorNodeIds([]);
+
+    const res = compileGraph(generated.nodes, generated.edges);
+    if (res.type === 'success') {
+      setCompiledSequence(res.sequence);
+    }
+    showToast(`✨ Generated track: ${generated.description}`, 'success');
+  }, [setNodes, setEdges, showToast]);
+
+  const handlePlay = useCallback(() => {
+    if (isPlaying) {
+      stop();
+      return;
+    }
+
+    let seq = compiledSequence;
+    if (!seq) {
+      const res = compileGraph(nodes, edges);
+      if (res.type === 'error') {
+        setErrorNodeIds(res.errorNodeIds || []);
+        const firstErrId = res.errorNodeIds?.[0];
+        showToast(
+          res.message,
+          'error',
+          firstErrId ? 'Focus Node' : undefined,
+          firstErrId && rfInstance ? () => {
+            const n = rfInstance.getNode(firstErrId);
+            if (n) {
+              rfInstance.setCenter(
+                (n.positionAbsolute?.x ?? n.position.x) + (n.width || 170) / 2,
+                (n.positionAbsolute?.y ?? n.position.y) + (n.height || 150) / 2,
+                { zoom: 1.1, duration: 600 }
+              );
+            }
+          } : undefined
+        );
+        return;
+      }
+      seq = res.sequence;
+      setCompiledSequence(seq);
+      setErrorNodeIds([]);
+    }
+
+    playSequence(seq, bpm, isLooping, handleNodePlay, handlePlayStateChange);
+  }, [isPlaying, stop, compiledSequence, nodes, edges, rfInstance, playSequence, bpm, isLooping, handleNodePlay, handlePlayStateChange, showToast]);
+
+  // Spacebar shortcut to toggle Play / Stop
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+        return;
+      }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handlePlay();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePlay]);
+
   const displayNodes = useMemo(() => {
     if (errorNodeIds.length === 0) return nodes;
     const errSet = new Set(errorNodeIds);
@@ -853,13 +937,14 @@ function App() {
         onAddMusic={openAddNodeModal}
         onAddEnd={addEndNode}
         onLoadExamples={openExampleModal}
+        onGenerateRandomTrack={() => setIsGenerateModalOpen(true)}
         onClearCanvas={clearCanvas}
         onCompile={compileSequence}
         onRollVariation={handleRollVariation}
         compiledSequence={compiledSequence}
         isPlaying={isPlaying}
         isLoaded={isLoaded}
-        onPlay={() => playSequence(compiledSequence!, bpm, isLooping, handleNodePlay, handlePlayStateChange)}
+        onPlay={handlePlay}
         onStop={stop}
       />
 
@@ -873,6 +958,12 @@ function App() {
         isOpen={isExampleModalOpen}
         onClose={() => setIsExampleModalOpen(false)}
         onSelect={handleLoadExample}
+      />
+
+      <GenerateTrackModal
+        isOpen={isGenerateModalOpen}
+        onClose={() => setIsGenerateModalOpen(false)}
+        onGenerate={handleGenerateTrack}
       />
 
       {isExportingAudio && (

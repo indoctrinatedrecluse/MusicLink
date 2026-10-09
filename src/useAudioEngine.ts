@@ -1,8 +1,15 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import * as Tone from 'tone';
 import { Chord as TonalChord } from 'tonal';
-import type { MusicNodeData } from './types/music';
-import { GUITAR_SYNTH_OPTIONS, FLUTE_SYNTH_OPTIONS } from './synthProfiles';
+import type { MusicNodeData, Instrument } from './types/music';
+import {
+  GUITAR_SYNTH_OPTIONS,
+  FLUTE_SYNTH_OPTIONS,
+  BASS_SYNTH_OPTIONS,
+  STRINGS_SYNTH_OPTIONS,
+  BRASS_SYNTH_OPTIONS,
+  CHIPTUNE_SYNTH_OPTIONS,
+} from './synthProfiles';
 import { parseNoteStep } from './musicUtils';
 
 export interface ScheduledNode {
@@ -10,7 +17,7 @@ export interface ScheduledNode {
   data: MusicNodeData;
   startTime: number;
   duration: number;
-  instrument: 'Piano' | 'Guitar' | 'Flute' | 'Drums';
+  instrument: Instrument;
 }
 
 export interface CompiledSequence {
@@ -39,7 +46,11 @@ export function useAudioEngine(volume: number) {
       Piano: new Tone.PolySynth(Tone.Synth).connect(limiter.current),
       Guitar: new Tone.PolySynth(Tone.Synth, GUITAR_SYNTH_OPTIONS).connect(limiter.current),
       Flute: new Tone.PolySynth(Tone.Synth, FLUTE_SYNTH_OPTIONS).connect(limiter.current),
-      Drums: new Tone.PolySynth(Tone.MembraneSynth).connect(limiter.current)
+      Bass: new Tone.PolySynth(Tone.Synth, BASS_SYNTH_OPTIONS).connect(limiter.current),
+      Strings: new Tone.PolySynth(Tone.Synth, STRINGS_SYNTH_OPTIONS).connect(limiter.current),
+      Brass: new Tone.PolySynth(Tone.Synth, BRASS_SYNTH_OPTIONS).connect(limiter.current),
+      '8-Bit': new Tone.PolySynth(Tone.Synth, CHIPTUNE_SYNTH_OPTIONS).connect(limiter.current),
+      Drums: new Tone.PolySynth(Tone.MembraneSynth).connect(limiter.current),
     };
     setIsLoaded(true);
 

@@ -77,10 +77,14 @@ Traditional Digital Audio Workstations (DAWs) rely strictly on linear horizontal
   - 🔇 **Mute (M)**: Silences the node without altering canvas topology or visual timeline syncing.
   - 🌟 **Solo (S)**: Isolates one or more nodes, silencing all non-soloed tracks simultaneously.
 - **Master Bus Limiter**: Hard ceiling master limiter (`Tone.Limiter(-1)`) prevents digital clipping when multi-track polyphonic chords sum together, preserving clean dynamics.
-- **Shared Synthesizer Profiles**: Centralized instrument configurations ensuring 100% audio consistency between real-time browser playback and offline rendering:
+- **Shared Synthesizer Profiles (8 Instruments)**: Centralized synthesizer configurations ensuring 100% audio consistency between real-time browser playback, offline WAV rendering, and GM MIDI export:
   - 🎹 **Piano**: Clean polyphonic synthesizer with balanced attack, decay, and sustain.
   - 🎸 **Guitar**: Triangle-wave synthesizer with plucked attack, extended decay, and acoustic resonance.
   - 🌬️ **Flute**: Smooth sine-wave synthesizer with soft attack and prolonged sustain.
+  - 🔊 **Synth Bass**: Punchy low-end sawtooth bass synthesizer tailored for driving basslines.
+  - 🎻 **Strings Pad**: Warm orchestral string ensemble with lush sustain for rich chordal atmospheres.
+  - 🎺 **Brass Horns**: Bright brass section synthesizer with crisp attack and harmonic brilliance.
+  - 👾 **8-Bit Lead**: Retro square-wave arcade lead for chiptune melodies.
   - 🥁 **Drums**: Membrane-based percussive synthesis for punchy rhythm lines.
 - **Octave Transposition**: Per-node pitch shifting from `-2` to `+2` octaves using `Tone.Frequency.transpose()`.
 - **Harmonic Chord Accompaniment**: Automatic chord parsing via **Tonal.js** (`Tonal.Chord.get`), playing harmonic beds underneath note melodies.
@@ -88,6 +92,8 @@ Traditional Digital Audio Workstations (DAWs) rely strictly on linear horizontal
   - Dynamic BPM adjustment (40 – 240 BPM).
   - Decibel-scaled logarithmic master volume slider (0 – 100%).
   - Seamless loop playback toggle.
+  - **Permanent Play/Stop Transport**: Glowing active Stop button (`Spacebar` shortcut) with single-click auto-compile and play.
+- **Procedural "Random Track" Generator**: Interactive dialog (`✨ Random Track`) generating complete compositions with diatonic chord progressions, chord-tone melody biasing, stepwise contour constraints, rhythmic phrasing, and optional chance branching.
 
 ### Smart Graph Editing & Auto-Bridging
 - **Auto-Bridging**: Deleting an intermediate node or entire chain automatically bridges incoming predecessors to outgoing successors, keeping the musical chain intact.
@@ -136,9 +142,10 @@ MusicLink/
 │   │   ├── AddNodeModal.tsx    # Modal dialog for creating new music nodes (with labels)
 │   │   ├── CanvasControls.tsx  # In-canvas HUD with navigation shortcuts
 │   │   ├── EndNode.tsx         # Red terminal anchor node
+│   │   ├── GenerateTrackModal.tsx # Algorithmic track generator dialog with scale/mood options
 │   │   ├── LoadExampleModal.tsx# Example sequence selector modal
 │   │   ├── MusicNode.tsx       # Core editable node with notes, chords, mixing strip & piano
-│   │   ├── MusicPlayer.tsx     # Play/Stop transport button component
+│   │   ├── MusicPlayer.tsx     # Persistent Play/Stop transport button component
 │   │   ├── NodeContextMenu.tsx # Context menu for node actions (Preview, Duplicate, Delete)
 │   │   ├── StartNode.tsx       # Green entry anchor node
 │   │   ├── Toast.tsx           # Non-blocking diagnostic banner with node focus actions
@@ -158,7 +165,8 @@ MusicLink/
 │   ├── main.tsx                # React entrypoint
 │   ├── midiExporter.ts         # Zero-dependency multi-track Standard MIDI (.mid) encoder (code-split)
 │   ├── musicUtils.ts           # Music notation parsing, duration step mapping, and note validation
-│   ├── synthProfiles.ts        # Centralized synthesizer configurations (Guitar, Flute, etc.)
+│   ├── synthProfiles.ts        # Centralized synthesizer configurations across all 8 instruments
+│   ├── trackGenerator.ts       # Diatonic chord progression and melodic contour generator
 │   └── useAudioEngine.ts       # Central audio hook with master limiter, polyphony & centroid pan
 ├── eslint.config.js            # ESLint flat configuration
 ├── index.html                  # HTML template

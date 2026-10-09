@@ -1,4 +1,29 @@
-export type Instrument = 'Piano' | 'Guitar' | 'Flute' | 'Bass' | 'Drums';
+export type Instrument =
+  | 'Piano'
+  | 'Guitar'
+  | 'Flute'
+  | 'Bass'
+  | 'Strings'
+  | 'Brass'
+  | '8-Bit'
+  | 'Drums';
+
+export interface InstrumentOption {
+  value: Instrument;
+  label: string;
+  icon: string;
+}
+
+export const INSTRUMENT_OPTIONS: InstrumentOption[] = [
+  { value: 'Piano', label: 'Piano', icon: '🎹' },
+  { value: 'Guitar', label: 'Guitar', icon: '🎸' },
+  { value: 'Flute', label: 'Flute', icon: '🌬️' },
+  { value: 'Bass', label: 'Synth Bass', icon: '🔊' },
+  { value: 'Strings', label: 'Strings Pad', icon: '🎻' },
+  { value: 'Brass', label: 'Brass Horns', icon: '🎺' },
+  { value: '8-Bit', label: '8-Bit Lead', icon: '👾' },
+  { value: 'Drums', label: 'Drums', icon: '🥁' },
+];
 
 export const PITCH_CLASSES = [
   'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'

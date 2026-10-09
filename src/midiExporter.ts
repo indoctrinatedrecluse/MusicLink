@@ -18,10 +18,14 @@ interface InstrumentConfig {
 }
 
 const INSTRUMENT_MAP: Record<string, InstrumentConfig> = {
-  Piano:  { channel: 0, program: 0 },   // Acoustic Grand Piano
-  Guitar: { channel: 1, program: 25 },  // Acoustic Guitar (steel)
-  Flute:  { channel: 2, program: 73 },  // Flute
-  Drums:  { channel: 3, program: 118 }, // Synth Drum
+  Piano:   { channel: 0, program: 0 },   // Acoustic Grand Piano
+  Guitar:  { channel: 1, program: 25 },  // Acoustic Guitar (steel)
+  Flute:   { channel: 2, program: 73 },  // Flute
+  Bass:    { channel: 3, program: 38 },  // Synth Bass 1
+  Strings: { channel: 4, program: 48 },  // String Ensemble 1
+  Brass:   { channel: 5, program: 61 },  // Brass Section
+  '8-Bit': { channel: 6, program: 80 },  // Lead 1 (square wave)
+  Drums:   { channel: 7, program: 118 }, // Synth Drum
 };
 
 const NOTE_TO_SEMITONE: Record<string, number> = {

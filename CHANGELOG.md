@@ -33,10 +33,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Auto-Scroll Playback**: The canvas now automatically pans to follow the currently playing node, which can be toggled via the Control Bar.
 - **Single-Node Preview**: Added a "Preview Node" option to the right-click context menu to isolate and play a single music node.
 - **UI Tooltips**: Added helpful hover descriptions to all control bar buttons and canvas control shortcuts.
+- **Custom Note Durations & Musical Rests**: Sequences now support per-note duration specifiers (e.g. `C4:4n`, `E4:2n`, `G4:1m`, `A4:16n`, dotted notes), musical rests (`R`, `R:4n`, `R:2n`), and chord clusters (`C4,E4,G4:2n`).
+- **Node Naming & Badges**: Added editable title labels (e.g. *"Intro Melody"*, *"Bass Groove"*) and active instrument icon badges to each music node and the Add Node modal.
+- **Live Note Validation**: Added real-time syntax checking in `MusicNode` with inline diagnostic warnings and red border highlights for invalid notes or unrecognized durations.
 
 ### Changed
 
 - **Playback Engine**: Refactored `MusicPlayer` to handle structured node data, playing notes and their corresponding chord context together.
+- **Pure DAG Compiler Extraction**: Extracted the graph compilation logic from `App.tsx` into a standalone, pure `compiler.ts` module with structured `CompileResult` outputs.
+- **Component Decomposition**: Extracted presentational control bar HUD into `Toolbar.tsx` and context menu actions into `NodeContextMenu.tsx`.
+- **Deduplicated Synthesizer Profiles**: Centralized synthesizer options in `synthProfiles.ts` shared between live playback (`useAudioEngine`) and offline WAV export (`audioExporter`).
 - **UI Layout**: Replaced the initial static page with a dynamic application layout featuring a control bar and the main canvas.
 - **Zero-Render Audio UI**: Reworked node playback highlighting to use direct DOM manipulation, bypassing heavy React re-renders to ensure 60fps animations.
 - **Debounced Node Edits**: Typing in the `MusicNode` text areas now uses a 300ms local state debounce before updating the master React Flow graph to eliminate input lag.
@@ -56,4 +62,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tab Freezing Bug**: Fixed a critical CSS lockup caused by compiling an empty sequence by validating duration and halting playback of 0-second animations.
 - **Tone.js PluckSynth Crash**: Resolved a fatal `Voice must extend Monophonic class` error by replacing the invalid `PluckSynth` with a properly configured `Tone.Synth` for the Guitar instrument.
 - **React Flow Warnings**: Fixed HMR warnings regarding `nodeTypes` by properly memoizing the object definitions in React.
+- **Stale Playback Desync**: Fixed out-of-sync playback after graph modifications by automatically invalidating compiled sequences upon any node or edge change.
 - **Cleanup**: Removed unused imports, variables, and corrected file pathing across the codebase.

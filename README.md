@@ -52,19 +52,22 @@ Traditional Digital Audio Workstations (DAWs) rely strictly on linear horizontal
 - **Infinite Zoom & Pan**: Freely explore expansive musical maps with smooth mouse-wheel zooming, click-drag panning, and dedicated arrow-key panning.
 - **Node Types**:
   - 🟢 **Start Node**: Defines the entry point(s) of musical execution.
-  - 🎹 **Music Node**: The primary musical cell containing multi-line note sequences, underlying harmonic chords, instrument selection, octave transposition, and dynamic resizing via drag handles.
+  - 🎹 **Music Node**: The primary musical cell containing an editable title label, instrument badge, multi-line note sequences with duration control, underlying harmonic chords, instrument selection, octave transposition, and dynamic resizing via drag handles.
   - 🔴 **End Node**: Defines the terminal boundary of an arrangement.
+- **Node Labels & Visual Identity**: Customize node titles (e.g. *"Intro Melody"*, *"Bass Groove"*) with active instrument icon badges for effortless navigation across complex canvases.
+- **Live Note Validation**: Instant syntax validation highlights invalid note names or durations in real time with red borders and diagnostic messages before compile.
 - **Grid Snapping**: Automatically aligns nodes on a clean 20px &times; 20px grid.
 - **Auto-Scroll Tracking**: Automatically pans and centers the canvas onto the currently playing node in real time.
 
 ### Polyphonic DAG Sequencer & Compiler
 - **Topological Sorting**: Evaluates the dependency tree using in-degree topological graph traversal, scheduling parallel branches simultaneously while waiting for merged paths before continuing.
+- **Flexible Note Durations & Rests**: Write notes with custom duration specifiers (`C4:4n`, `E4:2n`, `G4:1m`, `A4:16n`, dotted notes) and musical rests (`R`, `R:4n`, `R:2n`), alongside polyphonic chord clusters (`C4,E4,G4:2n`).
 - **Reachability & Continuity Validation**: Validates that all music nodes exist on a continuous path between a `Start` and `End` node before compilation.
 - **Loop & Cycle Detection**: Proactively detects circular loops/dependencies, safeguarding the audio engine and displaying user-friendly warnings.
-- **Quantized 8th-Note Timing**: Evaluates sequence durations dynamically based on note lengths and master BPM.
+- **Auto Recompile Invalidation**: Automatically clears compiled sequences upon node or wire changes to guarantee that playback always matches the current canvas state.
 
 ### Multi-Instrument Sound Engine
-- **Synthesizer Profiles**:
+- **Shared Synthesizer Profiles**: Centralized instrument configurations ensuring 100% audio consistency between real-time browser playback and offline WAV rendering.
   - 🎹 **Piano**: Clean polyphonic synthesizer with balanced attack, decay, and sustain.
   - 🎸 **Guitar**: Triangle-wave synthesizer with plucked attack, extended decay, and acoustic resonance.
   - 🌬️ **Flute**: Smooth sine-wave synthesizer with soft attack and prolonged sustain.
@@ -119,24 +122,29 @@ MusicLink/
 │   ├── audio/
 │   │   └── tonePlayer.ts       # Standalone graph traversal & polyphonic audio scheduler
 │   ├── components/
-│   │   ├── AddNodeModal.tsx    # Modal dialog for creating new music nodes
+│   │   ├── AddNodeModal.tsx    # Modal dialog for creating new music nodes (with labels)
 │   │   ├── CanvasControls.tsx  # In-canvas HUD with navigation shortcuts
 │   │   ├── EndNode.tsx         # Red terminal anchor node
 │   │   ├── LoadExampleModal.tsx# Example sequence selector modal
-│   │   ├── MusicNode.tsx       # Core editable node with notes, chords, and progress bar
+│   │   ├── MusicNode.tsx       # Core editable node with notes, durations, chords, and labels
 │   │   ├── MusicPlayer.tsx     # Play/Stop transport button component
+│   │   ├── NodeContextMenu.tsx # Context menu for node actions (Preview, Duplicate, Delete)
 │   │   ├── StartNode.tsx       # Green entry anchor node
+│   │   ├── Toolbar.tsx         # Top transport control bar and file management HUD
 │   │   └── sequences.ts        # Reference melody sequences (Für Elise, etc.)
 │   ├── types/
 │   │   └── music.ts            # Musical data models, pitch classes, and interfaces
 │   ├── 01_fur_elise.json ...   # 12 pre-packaged example composition files
 │   ├── 12_orchestral_duet.json
 │   ├── App.css                 # Application-wide styles and animations
-│   ├── App.tsx                 # Core application state, compiler, and canvas layout
+│   ├── App.tsx                 # Application state, canvas lifecycle, and routing
 │   ├── audioExporter.ts        # Tone.Offline WAV renderer & PCM byte encoder
+│   ├── compiler.ts             # Pure DAG compiler, reachability validator, and cycle detector
 │   ├── flowUtils.ts            # Canvas serialization, sessionStorage undo/redo state
 │   ├── index.ts                # Example sequence registry
 │   ├── main.tsx                # React entrypoint
+│   ├── musicUtils.ts           # Music notation parsing, duration step mapping, and note validation
+│   ├── synthProfiles.ts        # Centralized synthesizer configurations (Guitar, Flute, etc.)
 │   └── useAudioEngine.ts       # Central audio hook managing synths and Transport
 ├── eslint.config.js            # ESLint flat configuration
 ├── index.html                  # HTML template
@@ -165,7 +173,8 @@ Nodes and edges follow standard React Flow structures augmented with music-speci
       "id": "1",
       "type": "musicNode",
       "data": {
-        "sequence": "E4\nD#4\nE4\nB3\nD4\nC4\nA3",
+        "label": "Melody Phrase A",
+        "sequence": "E4:4n\nD#4:4n\nE4:2n\nB3:4n\nD4:4n\nC4:2n\nR:4n\nA3:2n",
         "chord": "Am",
         "instrument": "Piano",
         "octave": 0

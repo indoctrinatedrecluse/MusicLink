@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 360, "y": 40 } },
+    { "id": "b1", "type": "musicNode", "data": { "label": "Synth Bass Pulse", "sequence": "A2:8n\nA2:8n\nA2:8n\nA2:8n\nA2:8n\nA2:8n\nA2:8n\nA2:8n", "chord": "Am", "instrument": "Bass", "octave": 0, "volume": 90 }, "position": { "x": 100, "y": 180 } },
+    { "id": "l1", "type": "musicNode", "data": { "label": "8-Bit Cyber Hook", "sequence": "E4:4n\nG4:4n\nA4:2n\nC5:4n\nB4:4n\nA4:2n", "chord": "Am", "instrument": "8-Bit", "octave": 0, "volume": 85 }, "position": { "x": 360, "y": 180 } },
+    { "id": "d1", "type": "musicNode", "data": { "label": "Electro Beat 1", "sequence": "C2:4n\nC2:4n\nC2:4n\nC2:4n\nC2:4n\nC2:4n\nC2:4n\nC2:4n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 80 }, "position": { "x": 620, "y": 180 } },
+    { "id": "b2", "type": "musicNode", "data": { "label": "Synth Bass Drive", "sequence": "F2:8n\nF2:8n\nF2:8n\nF2:8n\nF2:8n\nF2:8n\nF2:8n\nF2:8n", "chord": "F", "instrument": "Bass", "octave": 0, "volume": 90 }, "position": { "x": 100, "y": 380 } },
+    { "id": "l2", "type": "musicNode", "data": { "label": "8-Bit Melody Lead", "sequence": "A4:4n\nC5:4n\nE5:2n\nD5:4n\nC5:4n\nB4:2n", "chord": "F", "instrument": "8-Bit", "octave": 0, "volume": 85 }, "position": { "x": 360, "y": 380 } },
+    { "id": "d2", "type": "musicNode", "data": { "label": "Electro Beat 2", "sequence": "C2:4n\nC2:4n\nC2:4n\nC2:4n\nC2:4n\nC2:4n\nC2:4n\nC2:4n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 80 }, "position": { "x": 620, "y": 380 } },
+    { "id": "b3", "type": "musicNode", "data": { "label": "Synth Bass Outro", "sequence": "C3:8n\nC3:8n\nC3:8n\nC3:8n\nG2:8n\nG2:8n\nG2:8n\nG2:8n", "chord": "C", "instrument": "Bass", "octave": 0, "volume": 90 }, "position": { "x": 100, "y": 580 } },
+    { "id": "l3", "type": "musicNode", "data": { "label": "8-Bit Lead Climax", "sequence": "C5:8n\nE5:8n\nG5:4n\nE5:4n\nD5:4n\nC5:4n\nA4:2n", "chord": "C", "instrument": "8-Bit", "octave": 0, "volume": 85 }, "position": { "x": 360, "y": 580 } },
+    { "id": "d3", "type": "musicNode", "data": { "label": "Electro Beat Fill", "sequence": "C2:4n\nC2:4n\nC2:4n\nC2:4n\nC2:8n\nC2:8n\nC2:4n\nC2:2n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 80 }, "position": { "x": 620, "y": 580 } },
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 360, "y": 760 } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "b1" },
+    { "id": "e2", "source": "start-1", "target": "l1" },
+    { "id": "e3", "source": "start-1", "target": "d1" },
+    { "id": "e4", "source": "b1", "target": "b2" },
+    { "id": "e5", "source": "l1", "target": "l2" },
+    { "id": "e6", "source": "d1", "target": "d2" },
+    { "id": "e7", "source": "b2", "target": "b3" },
+    { "id": "e8", "source": "l2", "target": "l3" },
+    { "id": "e9", "source": "d2", "target": "d3" },
+    { "id": "e10", "source": "b3", "target": "end-1" },
+    { "id": "e11", "source": "l3", "target": "end-1" },
+    { "id": "e12", "source": "d3", "target": "end-1" }
+  ],
+  "bpm": 118,
+  "volume": 85,
+  "isLooping": true
+}

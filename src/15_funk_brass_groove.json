@@ -1,0 +1,32 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 380, "y": 40 } },
+    { "id": "b1", "type": "musicNode", "data": { "label": "Funk Bassline 1", "sequence": "E2:8n\nR:8n\nE2:16n\nE2:16n\nG2:8n\nA2:8n\nD3:8n\nE3:4n", "chord": "Em7", "instrument": "Bass", "octave": 0, "volume": 90 }, "position": { "x": 80, "y": 180 } },
+    { "id": "br1", "type": "musicNode", "data": { "label": "Brass Horn Stabs 1", "sequence": "R:4n\nE4:8n\nG4:8n\nB4:4n\nR:8n\nD4:8n", "chord": "", "instrument": "Brass", "octave": 0, "volume": 85 }, "position": { "x": 380, "y": 180 } },
+    { "id": "d1", "type": "musicNode", "data": { "label": "Funk Pocket Drums 1", "sequence": "C2:4n\nC2:8n\nC2:8n\nC2:4n\nC2:4n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 80 }, "position": { "x": 680, "y": 180 } },
+    { "id": "b2", "type": "musicNode", "data": { "label": "Funk Bassline 2", "sequence": "A2:8n\nR:8n\nA2:16n\nA2:16n\nC3:8n\nD3:8n\nG3:8n\nA3:4n", "chord": "Am7", "instrument": "Bass", "octave": 0, "volume": 90 }, "position": { "x": 80, "y": 380 } },
+    { "id": "br2", "type": "musicNode", "data": { "label": "Brass Horn Stabs 2", "sequence": "R:4n\nA4:8n\nC5:8n\nE5:4n\nR:8n\nG4:8n", "chord": "", "instrument": "Brass", "octave": 0, "volume": 85 }, "position": { "x": 380, "y": 380 } },
+    { "id": "d2", "type": "musicNode", "data": { "label": "Funk Pocket Drums 2", "sequence": "C2:4n\nC2:8n\nC2:8n\nC2:4n\nC2:4n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 80 }, "position": { "x": 680, "y": 380 } },
+    { "id": "b3", "type": "musicNode", "data": { "label": "Funk Bass Turnaround", "sequence": "B2:8n\nB2:8n\nD3:8n\nF#3:8n\nA3:4n\nB2:4n", "chord": "B7", "instrument": "Bass", "octave": 0, "volume": 90 }, "position": { "x": 80, "y": 580 } },
+    { "id": "br3", "type": "musicNode", "data": { "label": "Brass Climax Fanfare", "sequence": "F#4:8n\nA4:8n\nB4:4n\nD5:4n\nE5:2n", "chord": "", "instrument": "Brass", "octave": 0, "volume": 90 }, "position": { "x": 380, "y": 580 } },
+    { "id": "d3", "type": "musicNode", "data": { "label": "Funk Drum Roll", "sequence": "C2:8n\nC2:8n\nC2:8n\nC2:8n\nC2:4n\nC2:2n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 80 }, "position": { "x": 680, "y": 580 } },
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 380, "y": 760 } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "b1" },
+    { "id": "e2", "source": "start-1", "target": "br1" },
+    { "id": "e3", "source": "start-1", "target": "d1" },
+    { "id": "e4", "source": "b1", "target": "b2" },
+    { "id": "e5", "source": "br1", "target": "br2" },
+    { "id": "e6", "source": "d1", "target": "d2" },
+    { "id": "e7", "source": "b2", "target": "b3" },
+    { "id": "e8", "source": "br2", "target": "br3" },
+    { "id": "e9", "source": "d2", "target": "d3" },
+    { "id": "e10", "source": "b3", "target": "end-1" },
+    { "id": "e11", "source": "br3", "target": "end-1" },
+    { "id": "e12", "source": "d3", "target": "end-1" }
+  ],
+  "bpm": 112,
+  "volume": 85,
+  "isLooping": true
+}

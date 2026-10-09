@@ -1,0 +1,24 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 360, "y": 40 } },
+    { "id": "intro", "type": "musicNode", "data": { "label": "Boss Encounter Theme", "sequence": "D4:16n\nF4:16n\nA4:16n\nD5:16n\nF5:8n\nE5:8n\nD5:4n\nC#5:4n", "chord": "Dm", "instrument": "8-Bit", "octave": 0, "volume": 90 }, "position": { "x": 360, "y": 180 } },
+    { "id": "bass-gallop", "type": "musicNode", "data": { "label": "8-Bit Galloping Bass", "sequence": "D2:8n\nD2:16n\nD2:16n\nD2:8n\nD2:16n\nD2:16n\nF2:8n\nE2:8n", "chord": "Dm", "instrument": "Bass", "octave": 0, "volume": 90 }, "position": { "x": 100, "y": 380 } },
+    { "id": "phase1", "type": "musicNode", "data": { "label": "Phase 1: Rapid Arpeggio", "sequence": "D5:16n\nF5:16n\nA5:16n\nD6:16n\nC6:16n\nA5:16n\nF5:16n\nD5:16n\nBb5:4n\nA5:4n", "chord": "Bb", "instrument": "8-Bit", "octave": 0, "volume": 85 }, "position": { "x": 360, "y": 380 } },
+    { "id": "phase2", "type": "musicNode", "data": { "label": "Phase 2: Brass Fanfare", "sequence": "D4:8n\nF4:8n\nA4:4n\nD5:4n\nC#5:2n", "chord": "A", "instrument": "Brass", "octave": 0, "volume": 90 }, "position": { "x": 620, "y": 380 } },
+    { "id": "climax", "type": "musicNode", "data": { "label": "Battle Victory Climax", "sequence": "D5:8n\nF5:8n\nA5:8n\nD6:4n\nC6:8n\nBb5:8n\nA5:8n\nG5:8n\nF5:8n\nE5:8n\nD5:2n", "chord": "Dm", "instrument": "8-Bit", "octave": 0, "volume": 90 }, "position": { "x": 360, "y": 580 } },
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 360, "y": 760 } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "intro" },
+    { "id": "e2", "source": "intro", "target": "bass-gallop" },
+    { "id": "e3", "source": "intro", "target": "phase1", "data": { "probability": 0.5 }, "label": "🎲 50%", "labelStyle": { "fill": "#e17055", "fontWeight": "bold", "fontSize": 11 }, "labelBgStyle": { "fill": "#fff5f0", "fillOpacity": 0.95, "stroke": "#e17055", "strokeWidth": 1, "rx": 4, "ry": 4 }, "labelBgPadding": [3, 5], "style": { "stroke": "#e17055", "strokeDasharray": "4,4" } },
+    { "id": "e4", "source": "intro", "target": "phase2", "data": { "probability": 0.5 }, "label": "🎲 50%", "labelStyle": { "fill": "#e17055", "fontWeight": "bold", "fontSize": 11 }, "labelBgStyle": { "fill": "#fff5f0", "fillOpacity": 0.95, "stroke": "#e17055", "strokeWidth": 1, "rx": 4, "ry": 4 }, "labelBgPadding": [3, 5], "style": { "stroke": "#e17055", "strokeDasharray": "4,4" } },
+    { "id": "e5", "source": "bass-gallop", "target": "climax" },
+    { "id": "e6", "source": "phase1", "target": "climax" },
+    { "id": "e7", "source": "phase2", "target": "climax" },
+    { "id": "e8", "source": "climax", "target": "end-1" }
+  ],
+  "bpm": 136,
+  "volume": 85,
+  "isLooping": true
+}

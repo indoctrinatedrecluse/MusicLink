@@ -10,6 +10,10 @@ import ex9 from './09_basic_drums.json';
 import ex10 from './10_rock_groove.json';
 import ex11 from './11_band_jam.json';
 import ex12 from './12_orchestral_duet.json';
+import ex13 from './13_synthwave_drive.json';
+import ex14 from './14_chamber_strings.json';
+import ex15 from './15_funk_brass_groove.json';
+import ex16 from './16_chiptune_boss_battle.json';
 
 export const exampleSequences = [
   { id: 'ex1', name: 'Fur Elise (Beethoven) - Piano', data: ex1 },
@@ -23,5 +27,9 @@ export const exampleSequences = [
   { id: 'ex9', name: 'Four on the Floor - Drums', data: ex9 },
   { id: 'ex10', name: 'Rock Groove - Drums', data: ex10 },
   { id: 'ex11', name: 'Band Jam (Piano, Guitar, Drums) - Multi', data: ex11 },
-  { id: 'ex12', name: 'Orchestral Duet (Piano, Flute) - Multi', data: ex12 }
+  { id: 'ex12', name: 'Orchestral Duet (Piano, Flute) - Multi', data: ex12 },
+  { id: 'ex13', name: 'Synthwave Night Drive (Bass, 8-Bit, Drums) - Multi', data: ex13 },
+  { id: 'ex14', name: 'Chamber Strings Adagio (Strings, Piano) - Multi', data: ex14 },
+  { id: 'ex15', name: 'Funk Horns & Bass Groove (Brass, Bass, Drums) - Multi', data: ex15 },
+  { id: 'ex16', name: 'Arcade Boss Battle (8-Bit, Brass, Bass) - Generative Branching', data: ex16 },
 ];

@@ -227,7 +227,7 @@ Nodes and edges follow standard React Flow structures augmented with music-speci
   - Supports musical rests using `R` or `Rest` (e.g. `R`, `R:4n`, `R:2n`).
   - Supports simultaneous chord clusters on a single line (e.g. `C4,E4,G4:2n`).
 - **`chord`**: Chord notation (e.g. `Am`, `Cmaj7`, `G7`, `F#m`) parsed into simultaneous polyphonic harmony bed.
-- **`instrument`**: Instrument synth sound (`Piano`, `Guitar`, `Flute`, `Drums`).
+- **`instrument`**: Instrument synth sound (`Piano`, `Guitar`, `Flute`, `Bass`, `Strings`, `Brass`, `8-Bit`, `Drums`).
 - **`octave`**: Numerical octave offset (`-2`, `-1`, `0`, `1`, `2`).
 
 ---
@@ -236,10 +236,11 @@ Nodes and edges follow standard React Flow structures augmented with music-speci
 
 | Shortcut | Action | Description |
 | :--- | :--- | :--- |
+| <kbd>Space</kbd> | **Play / Stop** | Toggles playback transport on the canvas |
 | <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> | **Pan Canvas** | Moves the view smoothly across the infinite canvas |
 | <kbd>Mouse Scroll</kbd> | **Zoom In / Out** | Zooms towards the mouse cursor |
 | <kbd>Shift</kbd> + **Click / Drag** | **Multi-Select** | Box-select or click multiple nodes to group them |
-| **Double Click Edge** | **Toggle Connection** | Bypasses / disables an edge without deleting it |
+| **Double Click Edge** | **Toggle Connection** | Cycles edge probability (`100% -> 🎲 75% -> 🎲 50% -> 🎲 25% -> 🚫 Off`) |
 | **Drag Edge End** | **Detach & Reconnect** | Re-routes an existing wire to a new target handle |
 | <kbd>Backspace</kbd> / <kbd>Delete</kbd> | **Delete Selection** | Removes selected nodes and auto-bridges surrounding edges |
 | <kbd>Ctrl</kbd> + <kbd>Z</kbd> | **Undo** | Reverts to the previous canvas snapshot |
@@ -252,7 +253,7 @@ Nodes and edges follow standard React Flow structures augmented with music-speci
 
 ## 📚 Built-In Musical Examples
 
-MusicLink includes 12 full-arc musical examples accessible via the **Load Examples** button:
+MusicLink includes 16 full-arc musical examples accessible via the **Load Examples** button:
 
 1. **Fur Elise (Beethoven)** – *Piano* (Classic recurring A-section motif)
 2. **Moonlight Sonata (Beethoven)** – *Piano* (Arpeggiated C# minor movement)
@@ -266,6 +267,10 @@ MusicLink includes 12 full-arc musical examples accessible via the **Load Exampl
 10. **Rock Groove** – *Drums* (Syncopated rock kick and snare pattern)
 11. **Band Jam** – *Multi-track* (Parallel Piano, Guitar, and Drum chains playing simultaneously)
 12. **Orchestral Duet** – *Multi-track* (Harmonized Piano and Flute contrapuntal duet)
+13. **Synthwave Night Drive** – *Multi-track* (Retro 80s pulsing Synth Bass, 8-Bit Lead, and Electro Drums)
+14. **Chamber Strings Adagio** – *Multi-track* (Lush cinematic Strings Pad and romantic Piano arpeggios in D minor)
+15. **Funk Horns & Bass Groove** – *Multi-track* (Syncopated slap Synth Bass, punchy Brass stabs, and pocket Drums)
+16. **Arcade Boss Battle** – *Generative Branching* (High-tempo 8-Bit Lead, Brass fanfare, and chance branching)
 
 ---
 

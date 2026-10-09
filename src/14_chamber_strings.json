@@ -1,0 +1,29 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 300, "y": 40 } },
+    { "id": "s1", "type": "musicNode", "data": { "label": "Strings Pad (Dm)", "sequence": "D4:2n\nF4:2n\nA4:1n", "chord": "Dm", "instrument": "Strings", "octave": 0, "volume": 85 }, "position": { "x": 140, "y": 180 } },
+    { "id": "p1", "type": "musicNode", "data": { "label": "Piano Arpeggio (Dm)", "sequence": "D4:8n\nF4:8n\nA4:8n\nD5:8n\nF5:8n\nE5:8n\nD5:8n\nA4:8n", "chord": "", "instrument": "Piano", "octave": 0, "volume": 90 }, "position": { "x": 460, "y": 180 } },
+    { "id": "s2", "type": "musicNode", "data": { "label": "Strings Pad (Bb)", "sequence": "Bb3:2n\nD4:2n\nF4:1n", "chord": "Bb", "instrument": "Strings", "octave": 0, "volume": 85 }, "position": { "x": 140, "y": 380 } },
+    { "id": "p2", "type": "musicNode", "data": { "label": "Piano Melodic Rise (Bb)", "sequence": "Bb4:8n\nD5:8n\nF5:8n\nBb5:4n\nA5:8n\nF5:8n\nD5:4n", "chord": "", "instrument": "Piano", "octave": 0, "volume": 90 }, "position": { "x": 460, "y": 380 } },
+    { "id": "s3", "type": "musicNode", "data": { "label": "Strings Pad (F)", "sequence": "F4:2n\nA4:2n\nC5:1n", "chord": "F", "instrument": "Strings", "octave": 0, "volume": 85 }, "position": { "x": 140, "y": 580 } },
+    { "id": "p3", "type": "musicNode", "data": { "label": "Piano Flow (F)", "sequence": "C5:8n\nF5:8n\nA5:8n\nC6:4n\nBb5:8n\nA5:8n\nF5:4n", "chord": "", "instrument": "Piano", "octave": 0, "volume": 90 }, "position": { "x": 460, "y": 580 } },
+    { "id": "s4", "type": "musicNode", "data": { "label": "Strings Pad (C)", "sequence": "C4:2n\nE4:2n\nG4:1n", "chord": "C", "instrument": "Strings", "octave": 0, "volume": 85 }, "position": { "x": 140, "y": 780 } },
+    { "id": "p4", "type": "musicNode", "data": { "label": "Piano Resolution (C)", "sequence": "G4:8n\nC5:8n\nE5:8n\nG5:4n\nF5:8n\nE5:8n\nD5:2n", "chord": "", "instrument": "Piano", "octave": 0, "volume": 90 }, "position": { "x": 460, "y": 780 } },
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 300, "y": 960 } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start-1", "target": "s1" },
+    { "id": "e2", "source": "start-1", "target": "p1" },
+    { "id": "e3", "source": "s1", "target": "s2" },
+    { "id": "e4", "source": "p1", "target": "p2" },
+    { "id": "e5", "source": "s2", "target": "s3" },
+    { "id": "e6", "source": "p2", "target": "p3" },
+    { "id": "e7", "source": "s3", "target": "s4" },
+    { "id": "e8", "source": "p3", "target": "p4" },
+    { "id": "e9", "source": "s4", "target": "end-1" },
+    { "id": "e10", "source": "p4", "target": "end-1" }
+  ],
+  "bpm": 80,
+  "volume": 85,
+  "isLooping": true
+}

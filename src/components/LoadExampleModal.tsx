@@ -1,4 +1,3 @@
-import React from 'react';
 import { exampleSequences } from '../index';
 
 export interface LoadExampleModalProps {

@@ -3,10 +3,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 export interface AddNodeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { sequence: string; chord: string; instrument: 'Piano' | 'Guitar' | 'Flute' | 'Drums'; octave: number }) => void;
+  onSave: (data: { label?: string; sequence: string; chord: string; instrument: 'Piano' | 'Guitar' | 'Flute' | 'Drums'; octave: number }) => void;
 }
 
 export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
+  const [label, setLabel] = useState('');
   const [sequence, setSequence] = useState('');
   const [chord, setChord] = useState('');
   const [instrument, setInstrument] = useState<'Piano' | 'Guitar' | 'Flute' | 'Drums'>('Piano');
@@ -14,6 +15,7 @@ export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
 
   useEffect(() => {
     if (isOpen) {
+      setLabel('');
       setSequence('');
       setChord('');
       setInstrument('Piano');
@@ -22,8 +24,8 @@ export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
   }, [isOpen]);
 
   const handleSave = useCallback(() => {
-    onSave({ sequence, chord, instrument, octave });
-  }, [sequence, chord, instrument, octave, onSave]);
+    onSave({ label: label.trim() || undefined, sequence, chord, instrument, octave });
+  }, [label, sequence, chord, instrument, octave, onSave]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -39,6 +41,16 @@ export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
     <div className="modal-overlay" onKeyDown={handleKeyDown}>
       <div className="modal-content">
         <h2 style={{ margin: '0 0 5px 0', color: '#333' }}>Add New Node</h2>
+        <label>
+          Label / Title (optional):
+          <input
+            type="text"
+            value={label}
+            onChange={e => setLabel(e.target.value)}
+            placeholder="e.g. Intro Melody, Verse Chords, Bass Groove"
+            style={{ marginTop: '5px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%', boxSizing: 'border-box' }}
+          />
+        </label>
         <div style={{ display: 'flex', gap: '10px' }}>
           <label style={{ flex: 1 }}>
             Instrument:
@@ -61,8 +73,8 @@ export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
           </label>
         </div>
         <label>
-          Notes (e.g. C4\nE4\nG4):
-          <textarea value={sequence} onChange={e => setSequence(e.target.value)} rows={4} placeholder="C4&#10;E4&#10;G4" />
+          Notes (e.g. C4\nE4:4n\nR:2n\nG4):
+          <textarea value={sequence} onChange={e => setSequence(e.target.value)} rows={4} placeholder={"C4:4n\nE4:4n\nR:4n\nG4:2n"} />
         </label>
         <label>
           Chords (e.g. C\nAm):

@@ -1,6 +1,8 @@
 import * as Tone from 'tone';
 import { Chord as TonalChord } from 'tonal';
 import type { CompiledSequence } from './useAudioEngine';
+import { GUITAR_SYNTH_OPTIONS, FLUTE_SYNTH_OPTIONS } from './synthProfiles';
+import { parseNoteStep } from './musicUtils';
 
 export async function renderSequenceToWav(sequence: CompiledSequence, bpm: number, volume: number = 80): Promise<Blob> {
   // 1 step = 1 8th note
@@ -27,14 +29,8 @@ export async function renderSequenceToWav(sequence: CompiledSequence, bpm: numbe
     // Instantiate synths identically to MusicPlayer so they match
     const synths: Record<string, Tone.PolySynth> = {
       Piano: new Tone.PolySynth(Tone.Synth).connect(volNode),
-      Guitar: new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 0.02, decay: 0.5, sustain: 0.2, release: 1.2 }
-      }).connect(volNode),
-      Flute: new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.1, decay: 0.1, sustain: 0.8, release: 0.5 }
-      }).connect(volNode),
+      Guitar: new Tone.PolySynth(Tone.Synth, GUITAR_SYNTH_OPTIONS).connect(volNode),
+      Flute: new Tone.PolySynth(Tone.Synth, FLUTE_SYNTH_OPTIONS).connect(volNode),
       Drums: new Tone.PolySynth(Tone.MembraneSynth).connect(volNode)
     };
 
@@ -62,9 +58,20 @@ export async function renderSequenceToWav(sequence: CompiledSequence, bpm: numbe
       }
 
       let noteOffset = 0;
-      for (const note of notesInNode) {
-        activeSynth.triggerAttackRelease(shiftNote(note), stepSecs, startSecs + noteOffset);
-        noteOffset += stepSecs;
+      for (const rawNote of notesInNode) {
+        const step = parseNoteStep(rawNote);
+        if (!step) continue;
+        const stepDurationSecs = step.stepUnits * stepSecs;
+
+        if (!step.isRest && step.pitches.length > 0) {
+          const shifted = step.pitches.map(shiftNote);
+          activeSynth.triggerAttackRelease(
+            shifted.length === 1 ? shifted[0] : shifted,
+            step.durationNotation,
+            startSecs + noteOffset
+          );
+        }
+        noteOffset += stepDurationSecs;
       }
     }
 

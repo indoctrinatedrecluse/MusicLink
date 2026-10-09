@@ -13,11 +13,11 @@ export const initialEdges = ex1.edges as Edge[];
 
 export function getSnapshot(n: Node<AppNodeData>[], e: Edge[], b: number, v: number, l: boolean) {
   const cleanNodes = n.map(node => {
-    const { selected: _s, dragging: _d, positionAbsolute: _pa, width: _w, height: _h, measured: _m, ...rest } = node;
+    const { selected: _s, dragging: _d, positionAbsolute: _pa, width: _w, height: _h, measured: _m, ...rest } = node as any;
     return rest;
   });
   const cleanEdges = e.map(edge => {
-    const { selected: _s, ...rest } = edge;
+    const { selected: _s, ...rest } = edge as any;
     return rest;
   });
   return JSON.stringify({ nodes: cleanNodes, edges: cleanEdges, bpm: b, volume: v, isLooping: l });

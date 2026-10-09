@@ -1,9 +1,18 @@
 import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import { NodeResizer } from '@reactflow/node-resizer';
 import '@reactflow/node-resizer/dist/style.css';
 
+import { isValidNoteStep } from '../musicUtils';
 import type { MusicNodeData } from '../types/music';
+
+const INSTRUMENT_ICONS: Record<string, string> = {
+  Piano: '🎹',
+  Guitar: '🎸',
+  Flute: '🌬️',
+  Drums: '🥁',
+  Bass: '🎸',
+};
 
 const nodeStyle = {
   background: '#fff',
@@ -67,15 +76,60 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
   }, [localData, id, setNodes]);
 
   // Update node data when input fields change
-  const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement | HTMLSelectElement>) => {
+  const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement | HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = evt.target;
     setLocalData((prev) => ({ ...prev, [name]: value }));
   }, []);
+
+  // Live note validation — supports single notes, chords, duration notation (e.g. C4:4n), and rests (R, R:2n)
+  const invalidNotes = useMemo(() =>
+    localData.sequence
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line !== '' && !isValidNoteStep(line)),
+    [localData.sequence],
+  );
+
+  const activeInstrument = localData.instrument || 'Piano';
 
   return (
     <div style={nodeStyle}>
       <NodeResizer minWidth={170} minHeight={150} />
       <Handle type="target" position={Position.Top} style={{ background: '#555' }} />
+
+      {/* Node Title / Label */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          paddingBottom: '6px',
+          marginBottom: '6px',
+          borderBottom: '1px solid #e0e0e0',
+        }}
+      >
+        <span style={{ fontSize: '15px' }} title={activeInstrument}>{INSTRUMENT_ICONS[activeInstrument] || '🎵'}</span>
+        <input
+          type="text"
+          name="label"
+          value={localData.label || ''}
+          onChange={onChange}
+          placeholder={`Node #${id}`}
+          style={{
+            flex: 1,
+            border: '1px solid transparent',
+            borderRadius: '4px',
+            padding: '2px 4px',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            color: '#1976d2',
+            background: 'transparent',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+          title="Click to rename this node"
+        />
+      </div>
       
       <div 
         style={{
@@ -105,7 +159,7 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
           <select
             id={`instrument-${id}`}
             name="instrument"
-            value={(localData as any).instrument || 'Piano'}
+            value={localData.instrument || 'Piano'}
             onChange={onChange}
             style={selectStyle}
           >
@@ -120,7 +174,7 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
           <select
             id={`octave-${id}`}
             name="octave"
-            value={(localData as any).octave || 0}
+            value={localData.octave ?? 0}
             onChange={onChange}
             style={selectStyle}
           >
@@ -140,9 +194,18 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
           name="sequence"
           value={localData.sequence}
           onChange={onChange}
-          style={textareaStyle}
-          placeholder="C4&#10;E4&#10;G4"
+          style={{
+            ...textareaStyle,
+            borderColor: invalidNotes.length > 0 ? '#e74c3c' : '#ccc',
+          }}
+          placeholder={"C4:4n\nE4:4n\nR:4n\nG4:2n"}
+          title="Enter notes (e.g. C4, E4:4n, R:2n for rests, C4,E4:2n for chords)"
         />
+        {invalidNotes.length > 0 && (
+          <p style={{ color: '#c0392b', fontSize: '11px', margin: '2px 0 0', lineHeight: '1.5' }}>
+            ⚠ Invalid: {invalidNotes.join(', ')}
+          </p>
+        )}
       </div>
 
       <div>

@@ -2,6 +2,8 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import * as Tone from 'tone';
 import { Chord as TonalChord } from 'tonal';
 import type { MusicNodeData } from './types/music';
+import { GUITAR_SYNTH_OPTIONS, FLUTE_SYNTH_OPTIONS } from './synthProfiles';
+import { parseNoteStep } from './musicUtils';
 
 export interface ScheduledNode {
   id: string;
@@ -24,22 +26,16 @@ export function useAudioEngine(volume: number) {
 
   // Store callbacks in refs to always access the latest closures safely
   const callbacks = useRef({
-    onNodePlay: (nodeId: string, isPlaying: boolean, durationSecs?: number) => {},
-    onPlayStateChange: (isPlaying: boolean, durationSecs: number) => {}
+    onNodePlay: (_nodeId: string, _isPlaying: boolean, _durationSecs?: number) => {},
+    onPlayStateChange: (_isPlaying: boolean, _durationSecs: number) => {}
   });
 
   useEffect(() => {
     // Initialize the synthesizers globally once
     synths.current = {
       Piano: new Tone.PolySynth(Tone.Synth).toDestination(),
-      Guitar: new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 0.02, decay: 0.5, sustain: 0.2, release: 1.2 }
-      }).toDestination(),
-      Flute: new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'sine' },
-        envelope: { attack: 0.1, decay: 0.1, sustain: 0.8, release: 0.5 }
-      }).toDestination(),
+      Guitar: new Tone.PolySynth(Tone.Synth, GUITAR_SYNTH_OPTIONS).toDestination(),
+      Flute: new Tone.PolySynth(Tone.Synth, FLUTE_SYNTH_OPTIONS).toDestination(),
       Drums: new Tone.PolySynth(Tone.MembraneSynth).toDestination()
     };
     setIsLoaded(true);
@@ -126,9 +122,20 @@ export function useAudioEngine(volume: number) {
         }
 
         let noteOffset = 0;
-        for (const note of notesInNode) {
-          activeSynth?.triggerAttackRelease(shiftNote(note), '8n', time + noteOffset);
-          noteOffset += stepSecs;
+        for (const rawNote of notesInNode) {
+          const step = parseNoteStep(rawNote);
+          if (!step) continue;
+          const stepDurationSecs = step.stepUnits * stepSecs;
+
+          if (!step.isRest && step.pitches.length > 0) {
+            const shifted = step.pitches.map(shiftNote);
+            activeSynth?.triggerAttackRelease(
+              shifted.length === 1 ? shifted[0] : shifted,
+              step.durationNotation,
+              time + noteOffset
+            );
+          }
+          noteOffset += stepDurationSecs;
         }
       }, startSecs);
       

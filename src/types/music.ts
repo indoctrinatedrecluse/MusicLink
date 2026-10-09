@@ -1,4 +1,4 @@
-export type Instrument = 'Piano' | 'Guitar' | 'Bass' | 'Drums'; // Expanded for future use
+export type Instrument = 'Piano' | 'Guitar' | 'Flute' | 'Bass' | 'Drums';
 
 export const PITCH_CLASSES = [
   'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'
@@ -39,8 +39,11 @@ export type Chord = `${PitchClass}${ChordQuality}`;
 
 // Represents the editable data within a single music node on the canvas.
 export interface MusicNodeData {
-  sequence: string; // Multi-line notes
+  label?: string;   // Optional user-friendly title (e.g., "Verse Intro", "Bass Line")
+  sequence: string; // Multi-line notes, optionally with durations (e.g. "C4:4n\nR:2n\nE4")
   chord: string;    // Multi-line chords
+  instrument?: Instrument;
+  octave?: number;
 }
 
 // The TypeScript equivalent of an "interface" or "struct" in C

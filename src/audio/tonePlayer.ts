@@ -1,6 +1,6 @@
 import * as Tone from 'tone';
-import { Node, Edge } from 'reactflow';
-import { MusicNodeData } from '../components/MusicNode';
+import type { Node, Edge } from 'reactflow';
+import type { MusicNodeData } from '../types/music';
 
 // We use a singleton PolySynth so we can play chords (multiple notes simultaneously)
 let synth: Tone.PolySynth | null = null;
@@ -69,9 +69,9 @@ export async function playGraph(nodes: Node<MusicNodeData>[], edges: Edge[]) {
     let currentTimeOffset = time;
     
     // Schedule each step in the sequence
-    sequence.forEach(step => {
+    sequence.forEach((step: string) => {
       // Handle comma-separated simultaneous notes (chords)
-      const notes = step.split(',').map(n => {
+      const notes = step.split(',').map((n: string) => {
         // If the note doesn't explicitly have an octave (ends with a number), default to octave 4
         return /[0-9]$/.test(n) ? n : n + '4';
       });

@@ -14,14 +14,16 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 import { MusicNode } from './components/MusicNode';
-import MusicPlayer from './components/MusicPlayer';
-import { useAudioEngine, type CompiledSequence, type ScheduledNode } from './useAudioEngine';
+import { useAudioEngine, type CompiledSequence } from './useAudioEngine';
 import { StartNode } from './components/StartNode';
 import { EndNode } from './components/EndNode';
 import { CanvasControls } from './components/CanvasControls';
 import { AddNodeModal } from './components/AddNodeModal';
 import { LoadExampleModal } from './components/LoadExampleModal';
-import { getSnapshot, loadSavedState, STORAGE_KEY, initialNodes, initialEdges, type AppNodeData } from './flowUtils';
+import { Toolbar } from './components/Toolbar';
+import { NodeContextMenu } from './components/NodeContextMenu';
+import { compileGraph } from './compiler';
+import { getSnapshot, loadSavedState, STORAGE_KEY, type AppNodeData } from './flowUtils';
 import './App.css';
 
 const initialState = loadSavedState();
@@ -192,7 +194,7 @@ function App() {
     });
 
     // Deselect old nodes, append new ones
-    setNodes((nds) => nds.map((n) => ({ ...n, selected: false })).concat(newNodes));
+    setNodes((nds) => [...nds.map((n) => ({ ...n, selected: false })), ...newNodes]);
     setEdges((eds) => eds.concat(newEdges));
     setContextMenu(null);
   }, [contextMenu, nodes, edges, setNodes, setEdges]);
@@ -317,7 +319,15 @@ function App() {
     return () => clearTimeout(timer);
   }, [nodes, edges, bpm, volume, isLooping]);
 
-  const onEdgeDoubleClick = useCallback((event: React.MouseEvent, edge: Edge) => {
+  // Improvement 4: Invalidate the compiled sequence whenever the canvas structure
+  // changes so the Play button disappears, forcing an explicit re-compile.
+  // BPM / volume / loop changes are intentionally excluded — those are passed as
+  // live parameters to playSequence() and don't require recompilation.
+  useEffect(() => {
+    setCompiledSequence(null);
+  }, [nodes, edges]);
+
+  const onEdgeDoubleClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
     setEdges((eds) =>
       eds.map((e) => {
         if (e.id === edge.id) {
@@ -363,7 +373,7 @@ function App() {
     setIsAddModalOpen(true);
   }, []);
 
-  const handleSaveNewNode = useCallback((data: { sequence: string; chord: string; instrument: 'Piano' | 'Guitar' | 'Flute' | 'Drums'; octave: number }) => {
+  const handleSaveNewNode = useCallback((data: { label?: string; sequence: string; chord: string; instrument: 'Piano' | 'Guitar' | 'Flute' | 'Drums'; octave: number }) => {
     const id = `${nodeIdCounter.current++}`;
     const x = Math.round((100 + Math.random() * 400) / 20) * 20;
     const y = Math.round((100 + Math.random() * 200) / 20) * 20;
@@ -530,118 +540,12 @@ function App() {
   }, [setNodes, setEdges]);
 
   const compileSequence = useCallback(() => {
-    if (nodes.length === 0) return alert("Canvas is empty. Add some nodes first.");
-
-    // Only consider edges that haven't been disabled by the user
-    const activeEdges = edges.filter(e => !e.data?.disabled);
-
-    // Check for complete chains (Start -> Music -> End)
-    const startNodes = nodes.filter(n => n.type === 'startNode');
-    const endNodes = nodes.filter(n => n.type === 'endNode');
-    const musicNodes = nodes.filter(n => n.type === 'musicNode');
-
-    if (startNodes.length === 0 || endNodes.length === 0) {
-      return alert("Warning: The chain is incomplete! Please ensure you have at least one Start node and one End node.");
-    }
-
-    // Check reachability from Start
-    const visitedFromStart = new Set<string>();
-    const startQueue = startNodes.map(n => n.id);
-    while (startQueue.length > 0) {
-      const current = startQueue.shift()!;
-      if (!visitedFromStart.has(current)) {
-        visitedFromStart.add(current);
-        activeEdges.filter(e => e.source === current).forEach(e => startQueue.push(e.target));
-      }
-    }
-
-    // Check reachability to End
-    const visitedFromEnd = new Set<string>();
-    const endQueue = endNodes.map(n => n.id);
-    while (endQueue.length > 0) {
-      const current = endQueue.shift()!;
-      if (!visitedFromEnd.has(current)) {
-        visitedFromEnd.add(current);
-        activeEdges.filter(e => e.target === current).forEach(e => endQueue.push(e.source));
-      }
-    }
-
-    const incompleteNodes = musicNodes.filter(n => !visitedFromStart.has(n.id) || !visitedFromEnd.has(n.id));
-    if (incompleteNodes.length > 0) {
-      return alert("Warning: The chain is incomplete! All music nodes must be on a continuous active path from a Start node to an End node.");
-    }
-
-    const scheduledNodes: ScheduledNode[] = [];
-    const inDegree = new Map<string, number>();
-    const maxStartTime = new Map<string, number>();
-
-    // Map out the in-degrees to support multiple convergent/divergent paths
-    nodes.forEach(n => {
-      inDegree.set(n.id, activeEdges.filter(e => e.target === n.id).length);
-      maxStartTime.set(n.id, 0);
-    });
-
-    // Find all unblocked root nodes
-    const queue: string[] = nodes.filter(n => inDegree.get(n.id) === 0).map(n => n.id);
-    let totalDuration = 0;
-
-    // Process DAG scheduling
-    while (queue.length > 0) {
-      const currentId = queue.shift()!;
-      const node = nodes.find(n => n.id === currentId);
-      if (!node) continue;
-
-      const currentStartTime = maxStartTime.get(currentId) || 0;
-      let duration = 0;
-
-      if (node.type === 'musicNode') {
-        const noteCount = node.data.sequence.split('\n').filter((n: string) => n.trim() !== '').length;
-        duration = noteCount; // Track duration logically as number of 8th notes
-        scheduledNodes.push({
-          id: node.id,
-          data: node.data,
-          startTime: currentStartTime,
-          duration: duration,
-          instrument: (node.data as any).instrument || 'Piano'
-        });
-      }
-
-      const endTime = currentStartTime + duration;
-      totalDuration = Math.max(totalDuration, endTime);
-
-      const outgoingEdges = activeEdges.filter(e => e.source === currentId);
-      for (const edge of outgoingEdges) {
-        const targetId = edge.target;
-        // Wait for all longest branches to finish before passing through the merged connection
-        maxStartTime.set(targetId, Math.max(maxStartTime.get(targetId) || 0, endTime));
-
-        const currentInDegree = inDegree.get(targetId)! - 1;
-        inDegree.set(targetId, currentInDegree);
-
-        if (currentInDegree === 0) {
-          queue.push(targetId);
-        }
-      }
-    }
-
-    const cycleNodes = nodes.filter(n => (inDegree.get(n.id) || 0) > 0);
-    if (cycleNodes.length > 0) {
-      alert("Cycles detected in the sequence. Please remove circular connections (branches looping back into themselves).");
+    const result = compileGraph(nodes, edges);
+    if (result.type === 'error') {
+      alert(result.message);
       return;
     }
-
-    if (totalDuration === 0) {
-      alert("The sequence contains no notes. Please add some notes to a Music node before compiling.");
-      return;
-    }
-
-    const newSequence: CompiledSequence = {
-      id: `sequence-${Date.now()}`,
-      scheduledNodes,
-      duration: totalDuration
-    };
-
-    setCompiledSequence(newSequence);
+    setCompiledSequence(result.sequence);
   }, [nodes, edges]);
 
   return (
@@ -737,48 +641,36 @@ function App() {
           100% { left: 100%; }
         }
       `}</style>
-      <div className="control-bar">
-        <h1>MusicFlow</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '10px' }}>
-          <label htmlFor="bpm" style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>BPM:</label>
-          <input id="bpm" type="number" value={bpm} onChange={e => setBpm(Number(e.target.value))} min={40} max={240} style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc', width: '60px' }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '10px' }}>
-          <label htmlFor="volume" style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>Volume:</label>
-          <input id="volume" type="range" value={volume} onChange={e => setVolume(Number(e.target.value))} min={0} max={100} style={{ width: '80px', cursor: 'pointer' }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '10px' }}>
-          <label htmlFor="loop" style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>Loop:</label>
-          <input id="loop" type="checkbox" checked={isLooping} onChange={e => setIsLooping(e.target.checked)} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '10px' }} title="Automatically pan to the playing node">
-          <label htmlFor="autoscroll" style={{ fontWeight: 'bold', fontSize: '14px', color: '#333', cursor: 'pointer' }}>Auto-scroll:</label>
-          <input id="autoscroll" type="checkbox" checked={isAutoScroll} onChange={e => setIsAutoScroll(e.target.checked)} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
-        </div>
-        <input type="file" accept=".json" ref={fileInputRef} style={{ display: 'none' }} onChange={importSequence} />
-        <button onClick={undo} disabled={!canUndo} title="Undo last action (Ctrl+Z)">↩ Undo</button>
-        <button onClick={redo} disabled={!canRedo} title="Redo last undone action (Ctrl+Y / Ctrl+Shift+Z)">↪ Redo</button>
-        <button onClick={() => fileInputRef.current?.click()} title="Import a saved sequence from a JSON file">Import</button>
-        <button onClick={exportSequence} title="Export the current sequence to a JSON file">Export JSON</button>
-        <button onClick={handleExportAudio} disabled={isExportingAudio || !compiledSequence} title="Export the compiled sequence as a .WAV audio file">
-          {isExportingAudio ? 'Exporting...' : 'Export Audio'}
-        </button>
-        <button onClick={addStartNode} title="Add a Start node to begin the sequence">+ Start</button>
-        <button onClick={openAddNodeModal} title="Add a Music node to create notes and chords">+ Music</button>
-        <button onClick={addEndNode} title="Add an End node to finish the sequence">+ End</button>
-        <button onClick={openExampleModal} title="Load an example sequence">Load Examples</button>
-        <button onClick={clearCanvas} title="Remove all nodes and edges from the canvas">Clear Canvas</button>
-        <button onClick={compileSequence} title="Compile and prepare the sequence for playback">Compile Sequence</button>
-        {compiledSequence && (
-          <MusicPlayer 
-            key={compiledSequence.id} 
-            isPlaying={isPlaying}
-            isLoaded={isLoaded}
-            onPlay={() => playSequence(compiledSequence, bpm, isLooping, handleNodePlay, handlePlayStateChange)}
-            onStop={stop} 
-          />
-        )}
-      </div>
+      <Toolbar
+        bpm={bpm}
+        onBpmChange={setBpm}
+        volume={volume}
+        onVolumeChange={setVolume}
+        isLooping={isLooping}
+        onLoopingChange={setIsLooping}
+        isAutoScroll={isAutoScroll}
+        onAutoScrollChange={setIsAutoScroll}
+        canUndo={canUndo}
+        onUndo={undo}
+        canRedo={canRedo}
+        onRedo={redo}
+        fileInputRef={fileInputRef}
+        onFileChange={importSequence}
+        onExportJson={exportSequence}
+        onExportAudio={handleExportAudio}
+        isExportingAudio={isExportingAudio}
+        onAddStart={addStartNode}
+        onAddMusic={openAddNodeModal}
+        onAddEnd={addEndNode}
+        onLoadExamples={openExampleModal}
+        onClearCanvas={clearCanvas}
+        onCompile={compileSequence}
+        compiledSequence={compiledSequence}
+        isPlaying={isPlaying}
+        isLoaded={isLoaded}
+        onPlay={() => playSequence(compiledSequence!, bpm, isLooping, handleNodePlay, handlePlayStateChange)}
+        onStop={stop}
+      />
 
       <AddNodeModal
         isOpen={isAddModalOpen}
@@ -803,35 +695,15 @@ function App() {
       )}
 
       {contextMenu && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: contextMenu.top,
-            left: contextMenu.left,
-            background: 'white',
-            border: '1px solid #ccc',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            borderRadius: '4px',
-            zIndex: 1000,
-            padding: '5px 0',
-            display: 'flex',
-            flexDirection: 'column',
-            minWidth: '120px'
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {nodes.find((n) => n.id === contextMenu.id)?.type === 'musicNode' && (
-            <div style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '14px', color: '#4CAF50', fontWeight: 'bold' }} onClick={previewNode} className="context-menu-item">
-              ▶️ Preview Node
-            </div>
-          )}
-          <div style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '14px', color: '#333' }} onClick={duplicateSelection} className="context-menu-item">
-            {nodes.filter((n) => n.selected).length > 1 ? '📋 Copy Chain' : '📋 Duplicate'}
-          </div>
-          <div style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '14px', color: '#F44336' }} onClick={deleteSelectionAndBridge} className="context-menu-item">
-            {nodes.filter((n) => n.selected).length > 1 ? '🗑️ Delete Chain (Bridge)' : '🗑️ Delete (Bridge)'}
-          </div>
-        </div>
+        <NodeContextMenu
+          top={contextMenu.top}
+          left={contextMenu.left}
+          isMusicNode={nodes.find(n => n.id === contextMenu.id)?.type === 'musicNode'}
+          selectedCount={nodes.filter(n => n.selected).length}
+          onPreview={previewNode}
+          onDuplicate={duplicateSelection}
+          onDeleteAndBridge={deleteSelectionAndBridge}
+        />
       )}
 
       <div className={`react-flow-wrapper ${isConnecting ? 'is-connecting' : ''}`} style={{ position: 'relative' }}>

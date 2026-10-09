@@ -189,8 +189,13 @@ Nodes and edges follow standard React Flow structures augmented with music-speci
 }
 ```
 
-- **`sequence`**: Newline-separated list of notes (e.g. `C4`, `F#5`, `Eb3`). Each note represents an 8th-note duration.
-- **`chord`**: Chord notation (e.g. `Am`, `Cmaj7`, `G7`, `F#m`) parsed into simultaneous polyphonic harmony.
+- **`label`**: Optional human-readable node title (e.g. `"Verse Intro"`, `"Lead Guitar"`, `"Kick & Snare"`).
+- **`sequence`**: Newline-separated list of notes (e.g. `C4`, `F#5:4n`, `R:2n`, `C4,E4,G4:1m`).
+  - Supports standard notes (defaults to 8th-note duration `8n`).
+  - Supports custom note durations with `:` suffix: `1m` (measure), `1n` (whole), `2n` (half), `4n` (quarter), `8n` (eighth), `16n` (sixteenth), including dotted values (`4n.`, `2n.`).
+  - Supports musical rests using `R` or `Rest` (e.g. `R`, `R:4n`, `R:2n`).
+  - Supports simultaneous chord clusters on a single line (e.g. `C4,E4,G4:2n`).
+- **`chord`**: Chord notation (e.g. `Am`, `Cmaj7`, `G7`, `F#m`) parsed into simultaneous polyphonic harmony bed.
 - **`instrument`**: Instrument synth sound (`Piano`, `Guitar`, `Flute`, `Drums`).
 - **`octave`**: Numerical octave offset (`-2`, `-1`, `0`, `1`, `2`).
 

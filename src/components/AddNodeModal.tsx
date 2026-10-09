@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import { VirtualPiano } from './VirtualPiano';
 
 export interface AddNodeModalProps {
   isOpen: boolean;
@@ -12,16 +13,20 @@ export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
   const [chord, setChord] = useState('');
   const [instrument, setInstrument] = useState<'Piano' | 'Guitar' | 'Flute' | 'Drums'>('Piano');
   const [octave, setOctave] = useState<number>(0);
+  const [showPiano, setShowPiano] = useState(false);
 
-  useEffect(() => {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setLabel('');
       setSequence('');
       setChord('');
       setInstrument('Piano');
       setOctave(0);
+      setShowPiano(false);
     }
-  }, [isOpen]);
+  }
 
   const handleSave = useCallback(() => {
     onSave({ label: label.trim() || undefined, sequence, chord, instrument, octave });
@@ -72,10 +77,53 @@ export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
             </select>
           </label>
         </div>
-        <label>
-          Notes (e.g. C4\nE4:4n\nR:2n\nG4):
-          <textarea value={sequence} onChange={e => setSequence(e.target.value)} rows={4} placeholder={"C4:4n\nE4:4n\nR:4n\nG4:2n"} />
-        </label>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px' }}>
+            <label style={{ fontWeight: 'bold', fontSize: '14px', color: '#333' }}>Notes</label>
+            <button
+              type="button"
+              onClick={() => setShowPiano(p => !p)}
+              style={{
+                padding: '3px 8px',
+                fontSize: '11px',
+                background: showPiano ? '#1976d2' : '#f0f0f0',
+                color: showPiano ? '#fff' : '#1976d2',
+                border: '1px solid #1976d2',
+                borderRadius: '3px',
+                cursor: 'pointer',
+              }}
+            >
+              🎹 {showPiano ? 'Hide Piano' : 'Piano Input'}
+            </button>
+          </div>
+
+          {showPiano && (
+            <VirtualPiano
+              initialOctave={4 + octave}
+              onInsertNote={noteToken => {
+                setSequence(prev => {
+                  const existing = prev ? prev.trimEnd() : '';
+                  return existing ? `${existing}\n${noteToken}` : noteToken;
+                });
+              }}
+              onDeleteLast={() => {
+                setSequence(prev => {
+                  const lines = prev.split('\n');
+                  lines.pop();
+                  return lines.join('\n');
+                });
+              }}
+            />
+          )}
+
+          <textarea
+            value={sequence}
+            onChange={e => setSequence(e.target.value)}
+            rows={4}
+            placeholder={"C4:4n\nE4:4n\nR:4n\nG4:2n"}
+            style={{ marginTop: '5px', width: '100%', boxSizing: 'border-box' }}
+          />
+        </div>
         <label>
           Chords (e.g. C\nAm):
           <textarea value={chord} onChange={e => setChord(e.target.value)} rows={4} placeholder="C&#10;G&#10;Am" />

@@ -37,13 +37,15 @@ export type ChordQuality = typeof CHORD_QUALITIES[number];
 // Exhaustive list of chords combining all pitch classes and qualities (e.g., 'Cmaj7', 'F#m', 'D7')
 export type Chord = `${PitchClass}${ChordQuality}`;
 
-// Represents the editable data within a single music node on the canvas.
 export interface MusicNodeData {
   label?: string;   // Optional user-friendly title (e.g., "Verse Intro", "Bass Line")
   sequence: string; // Multi-line notes, optionally with durations (e.g. "C4:4n\nR:2n\nE4")
   chord: string;    // Multi-line chords
   instrument?: Instrument;
   octave?: number;
+  volume?: number;    // 0 to 100, default 100
+  isMuted?: boolean;  // Mute audio output
+  isSoloed?: boolean; // Solo audio output
 }
 
 // The TypeScript equivalent of an "interface" or "struct" in C

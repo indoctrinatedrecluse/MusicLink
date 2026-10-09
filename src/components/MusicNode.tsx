@@ -4,6 +4,7 @@ import { NodeResizer } from '@reactflow/node-resizer';
 import '@reactflow/node-resizer/dist/style.css';
 
 import { isValidNoteStep } from '../musicUtils';
+import { VirtualPiano } from './VirtualPiano';
 import type { MusicNodeData } from '../types/music';
 
 const INSTRUMENT_ICONS: Record<string, string> = {
@@ -56,10 +57,13 @@ const labelStyle = {
 export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
   const { setNodes } = useReactFlow();
   const [localData, setLocalData] = useState(data);
+  const [showPiano, setShowPiano] = useState(false);
 
-  useEffect(() => {
+  const [prevData, setPrevData] = useState(data);
+  if (data !== prevData) {
+    setPrevData(data);
     setLocalData(data);
-  }, [data]);
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -187,8 +191,111 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
         </div>
       </div>
 
+      {/* Channel Strip Mixing: Mute, Solo, Volume */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          marginTop: '8px',
+          padding: '4px 6px',
+          background: '#f8f9fa',
+          border: '1px solid #e9ecef',
+          borderRadius: '4px',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setLocalData(prev => ({ ...prev, isMuted: !prev.isMuted }))}
+          style={{
+            padding: '2px 6px',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            borderRadius: '3px',
+            border: localData.isMuted ? '1px solid #d32f2f' : '1px solid #ccc',
+            background: localData.isMuted ? '#d32f2f' : '#fff',
+            color: localData.isMuted ? '#fff' : '#555',
+            cursor: 'pointer',
+          }}
+          title={localData.isMuted ? 'Unmute track' : 'Mute track'}
+        >
+          M
+        </button>
+        <button
+          type="button"
+          onClick={() => setLocalData(prev => ({ ...prev, isSoloed: !prev.isSoloed }))}
+          style={{
+            padding: '2px 7px',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            borderRadius: '3px',
+            border: localData.isSoloed ? '1px solid #fbc02d' : '1px solid #ccc',
+            background: localData.isSoloed ? '#fbc02d' : '#fff',
+            color: localData.isSoloed ? '#000' : '#555',
+            cursor: 'pointer',
+          }}
+          title={localData.isSoloed ? 'Deactivate Solo' : 'Solo track'}
+        >
+          S
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#666' }}>Vol</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={localData.volume !== undefined ? localData.volume : 100}
+            onChange={e => setLocalData(prev => ({ ...prev, volume: Number(e.target.value) }))}
+            style={{ flex: 1, height: '4px', cursor: 'pointer', minWidth: '40px' }}
+            title={`Volume: ${localData.volume ?? 100}%`}
+          />
+          <span style={{ fontSize: '10px', color: '#777', width: '26px', textAlign: 'right' }}>
+            {localData.volume ?? 100}%
+          </span>
+        </div>
+      </div>
+
       <div>
-        <label htmlFor={`sequence-${id}`} style={labelStyle}>Notes</label>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
+          <label htmlFor={`sequence-${id}`} style={{ ...labelStyle, marginTop: 0 }}>Notes</label>
+          <button
+            type="button"
+            onClick={() => setShowPiano(p => !p)}
+            style={{
+              padding: '2px 6px',
+              fontSize: '10px',
+              background: showPiano ? '#1976d2' : '#fff',
+              color: showPiano ? '#fff' : '#1976d2',
+              border: '1px solid #1976d2',
+              borderRadius: '3px',
+              cursor: 'pointer',
+            }}
+            title="Toggle Virtual Piano Step Input"
+          >
+            🎹 {showPiano ? 'Hide Piano' : 'Piano Input'}
+          </button>
+        </div>
+
+        {showPiano && (
+          <VirtualPiano
+            initialOctave={4 + (localData.octave ?? 0)}
+            onInsertNote={noteToken => {
+              setLocalData(prev => {
+                const existing = prev.sequence ? prev.sequence.trimEnd() : '';
+                const updated = existing ? `${existing}\n${noteToken}` : noteToken;
+                return { ...prev, sequence: updated };
+              });
+            }}
+            onDeleteLast={() => {
+              setLocalData(prev => {
+                const lines = prev.sequence.split('\n');
+                lines.pop();
+                return { ...prev, sequence: lines.join('\n') };
+              });
+            }}
+          />
+        )}
+
         <textarea
           id={`sequence-${id}`}
           name="sequence"

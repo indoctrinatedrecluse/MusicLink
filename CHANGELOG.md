@@ -36,6 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Custom Note Durations & Musical Rests**: Sequences now support per-note duration specifiers (e.g. `C4:4n`, `E4:2n`, `G4:1m`, `A4:16n`, dotted notes), musical rests (`R`, `R:4n`, `R:2n`), and chord clusters (`C4,E4,G4:2n`).
 - **Node Naming & Badges**: Added editable title labels (e.g. *"Intro Melody"*, *"Bass Groove"*) and active instrument icon badges to each music node and the Add Node modal.
 - **Live Note Validation**: Added real-time syntax checking in `MusicNode` with inline diagnostic warnings and red border highlights for invalid notes or unrecognized durations.
+- **In-Canvas Diagnostic Highlighting & Toast Notifications**: Replaced browser `alert()` popups with non-blocking toast notifications. Compilation errors dynamically highlight offending nodes with pulsating red borders and glow effects, with a "Focus Node" button to center the viewport directly on the culprit.
+- **Master Audio Bus Limiter**: Added `Tone.Limiter(-1)` on the master bus across live playback and offline WAV rendering to prevent digital clipping when multi-track polyphonic chords sum together.
+- **Viewport Pan De-Jittering**: Replaced concurrent node pan conflicts with smooth centroid calculation (`scheduleViewportCenter`), centering the viewport on the average midpoint of all concurrently playing nodes.
+- **Interactive Virtual Piano Step-Input**: Embedded a 13-key keyboard widget (`VirtualPiano.tsx`) with octave switching (`C3`–`C6`), note duration selector (`16n`–`1n`), rest button, delete step, and instant polyphonic auditioning, available in both `MusicNode` and `AddNodeModal`.
+- **Channel Strip Mixing per Node (Mute, Solo & Volume)**: Added dedicated mixing bars to every music node with individual Volume sliders (0–100%), Mute (`M`), and Solo (`S`) toggles, fully synchronized with live playback, offline WAV export, and MIDI export.
+- **Generative Probability & Conditional Branching**: Added edge chance cycling (`100% -> 🎲 75% -> 🎲 50% -> 🎲 25% -> 🚫 Off -> 100%`) with visual badge overlays, stochastic path evaluation in `compiler.ts`, and a "🎲 Roll Variation" toolbar button.
+- **Standard MIDI File (.mid) Multi-Track Export**: Implemented a zero-dependency, pure TypeScript SMF Type 1 binary encoder (`midiExporter.ts`) exporting multi-track `.mid` files with Conductor tempo tracks, GM instrument program changes, volume velocity mapping, chords, and note lengths for any DAW.
 
 ### Changed
 

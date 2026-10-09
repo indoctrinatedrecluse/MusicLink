@@ -22,6 +22,7 @@ import { AddNodeModal } from './components/AddNodeModal';
 import { LoadExampleModal } from './components/LoadExampleModal';
 import { Toolbar } from './components/Toolbar';
 import { NodeContextMenu } from './components/NodeContextMenu';
+import { Toast, type ToastItem, type ToastType } from './components/Toast';
 import { compileGraph } from './compiler';
 import { getSnapshot, loadSavedState, STORAGE_KEY, type AppNodeData } from './flowUtils';
 import './App.css';
@@ -33,6 +34,9 @@ function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNodeData>(initialState.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialState.edges);
   const [compiledSequence, setCompiledSequence] = useState<CompiledSequence | null>(null);
+  const [errorNodeIds, setErrorNodeIds] = useState<string[]>([]);
+  const [toast, setToast] = useState<ToastItem | null>(null);
+
   const nodeIdCounter = useRef(initialState.nextId);
   const edgeUpdateSuccessful = useRef(true);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -54,8 +58,39 @@ function App() {
   const [canUndo, setCanUndo] = useState(initialState.historyIndex > 0);
   const [canRedo, setCanRedo] = useState(initialState.historyIndex < initialState.history.length - 1);
 
+  const showToast = useCallback((message: string, type: ToastType = 'info', actionLabel?: string, onAction?: () => void) => {
+    setToast({ id: `toast-${Date.now()}`, message, type, actionLabel, onAction });
+  }, []);
+
+  // Viewport centering de-jittering: centroid of all parallel playing nodes
+  const activePlayingNodes = useRef<Set<string>>(new Set());
+  const autoScrollRaf = useRef<number | null>(null);
+
+  const scheduleViewportCenter = useCallback(() => {
+    if (!rfInstance || !isAutoScroll) return;
+    if (autoScrollRaf.current !== null) return;
+
+    autoScrollRaf.current = requestAnimationFrame(() => {
+      autoScrollRaf.current = null;
+      if (activePlayingNodes.current.size === 0) return;
+
+      const activeNodes = Array.from(activePlayingNodes.current)
+        .map(id => rfInstance.getNode(id))
+        .filter((n): n is NonNullable<typeof n> => !!n);
+
+      if (activeNodes.length === 0) return;
+
+      // Calculate centroid (average position) of all concurrently playing nodes
+      const avgX = activeNodes.reduce((sum, n) => sum + (n.positionAbsolute?.x ?? n.position.x) + (n.width || 170) / 2, 0) / activeNodes.length;
+      const avgY = activeNodes.reduce((sum, n) => sum + (n.positionAbsolute?.y ?? n.position.y) + (n.height || 150) / 2, 0) / activeNodes.length;
+
+      rfInstance.setCenter(avgX, avgY, { zoom: rfInstance.getZoom(), duration: 400 });
+    });
+  }, [rfInstance, isAutoScroll]);
+
   const handleNodePlay = useCallback((nodeId: string, isPlaying: boolean, durationSecs?: number) => {
     if (nodeId === 'CLEAR_ALL') {
+      activePlayingNodes.current.clear();
       document.querySelectorAll('.react-flow__node').forEach(el => {
         el.classList.remove('playing');
         const pb = el.querySelector('.node-progress-bar') as HTMLElement;
@@ -70,6 +105,7 @@ function App() {
     if (el) {
       const pb = el.querySelector('.node-progress-bar') as HTMLElement;
       if (isPlaying) {
+        activePlayingNodes.current.add(nodeId);
         el.classList.add('playing');
         if (pb && durationSecs) {
           pb.style.transition = 'none';
@@ -78,16 +114,9 @@ function App() {
           pb.style.transition = `width ${durationSecs}s linear`;
           pb.style.width = '100%';
         }
-
-        if (rfInstance && isAutoScroll) {
-          const node = rfInstance.getNode(nodeId);
-          if (node) {
-            const x = (node.positionAbsolute?.x ?? node.position.x) + (node.width || 170) / 2;
-            const y = (node.positionAbsolute?.y ?? node.position.y) + (node.height || 150) / 2;
-            rfInstance.setCenter(x, y, { zoom: rfInstance.getZoom(), duration: 500 });
-          }
-        }
+        scheduleViewportCenter();
       } else {
+        activePlayingNodes.current.delete(nodeId);
         el.classList.remove('playing');
         if (pb) {
           pb.style.transition = 'none';
@@ -95,7 +124,7 @@ function App() {
         }
       }
     }
-  }, [rfInstance, isAutoScroll]);
+  }, [scheduleViewportCenter]);
 
   const handlePlayStateChange = useCallback((isPlaying: boolean, durationSecs: number) => {
     setPlayheadState({ active: isPlaying, duration: durationSecs });
@@ -322,26 +351,94 @@ function App() {
   // Improvement 4: Invalidate the compiled sequence whenever the canvas structure
   // changes so the Play button disappears, forcing an explicit re-compile.
   // BPM / volume / loop changes are intentionally excluded — those are passed as
-  // live parameters to playSequence() and don't require recompilation.
-  useEffect(() => {
-    setCompiledSequence(null);
-  }, [nodes, edges]);
+  const [prevGraphState, setPrevGraphState] = useState({ nodes, edges });
+  if (nodes !== prevGraphState.nodes || edges !== prevGraphState.edges) {
+    setPrevGraphState({ nodes, edges });
+    if (compiledSequence !== null) {
+      setCompiledSequence(null);
+    }
+    if (errorNodeIds.length > 0) {
+      setErrorNodeIds([]);
+    }
+  }
 
   const onEdgeDoubleClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
+    let nextToastMsg = '';
     setEdges((eds) =>
       eds.map((e) => {
         if (e.id === edge.id) {
+          const currentProb = e.data?.probability;
           const isDisabled = e.data?.disabled;
-          return {
-            ...e,
-            data: { ...e.data, disabled: !isDisabled },
-            style: { ...e.style, opacity: !isDisabled ? 0.3 : 1, strokeDasharray: !isDisabled ? '5,5' : 'none' },
-          };
+
+          if (isDisabled) {
+            // Disabled -> 100% (Default)
+            nextToastMsg = 'Connection restored to 100% (Always active)';
+            return {
+              ...e,
+              data: { ...e.data, disabled: false, probability: 1.0 },
+              label: undefined,
+              labelStyle: undefined,
+              labelBgStyle: undefined,
+              labelBgPadding: undefined,
+              style: { ...e.style, opacity: 1, strokeDasharray: 'none', stroke: undefined },
+            };
+          } else if (currentProb === 0.25) {
+            // 25% -> Disabled
+            nextToastMsg = 'Connection disabled (0%)';
+            return {
+              ...e,
+              data: { ...e.data, disabled: true, probability: 0 },
+              label: '🚫 Off',
+              labelStyle: { fill: '#888', fontWeight: 'bold', fontSize: 11 },
+              labelBgStyle: { fill: '#f0f0f0', fillOpacity: 0.9, rx: 4, ry: 4 },
+              labelBgPadding: [3, 5],
+              style: { ...e.style, opacity: 0.35, strokeDasharray: '5,5', stroke: '#999' },
+            };
+          } else if (currentProb === 0.5) {
+            // 50% -> 25%
+            nextToastMsg = '🎲 Connection probability set to 25%';
+            return {
+              ...e,
+              data: { ...e.data, disabled: false, probability: 0.25 },
+              label: '🎲 25%',
+              labelStyle: { fill: '#d63031', fontWeight: 'bold', fontSize: 11 },
+              labelBgStyle: { fill: '#fff0f0', fillOpacity: 0.95, stroke: '#d63031', strokeWidth: 1, rx: 4, ry: 4 },
+              labelBgPadding: [3, 5],
+              style: { ...e.style, opacity: 1, strokeDasharray: '3,4', stroke: '#d63031' },
+            };
+          } else if (currentProb === 0.75) {
+            // 75% -> 50%
+            nextToastMsg = '🎲 Connection probability set to 50%';
+            return {
+              ...e,
+              data: { ...e.data, disabled: false, probability: 0.5 },
+              label: '🎲 50%',
+              labelStyle: { fill: '#e17055', fontWeight: 'bold', fontSize: 11 },
+              labelBgStyle: { fill: '#fff5f0', fillOpacity: 0.95, stroke: '#e17055', strokeWidth: 1, rx: 4, ry: 4 },
+              labelBgPadding: [3, 5],
+              style: { ...e.style, opacity: 1, strokeDasharray: '4,4', stroke: '#e17055' },
+            };
+          } else {
+            // 100% -> 75%
+            nextToastMsg = '🎲 Connection probability set to 75%';
+            return {
+              ...e,
+              data: { ...e.data, disabled: false, probability: 0.75 },
+              label: '🎲 75%',
+              labelStyle: { fill: '#6c5ce7', fontWeight: 'bold', fontSize: 11 },
+              labelBgStyle: { fill: '#f3f0ff', fillOpacity: 0.95, stroke: '#6c5ce7', strokeWidth: 1, rx: 4, ry: 4 },
+              labelBgPadding: [3, 5],
+              style: { ...e.style, opacity: 1, strokeDasharray: '6,3', stroke: '#6c5ce7' },
+            };
+          }
         }
         return e;
       })
     );
-  }, [setEdges]);
+    if (nextToastMsg) {
+      showToast(nextToastMsg, 'info');
+    }
+  }, [setEdges, showToast]);
 
   const onConnect = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
@@ -467,11 +564,12 @@ function App() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [nodes, edges, bpm, volume, isLooping]);
+    showToast("Sequence exported to JSON successfully!", "success");
+  }, [nodes, edges, bpm, volume, isLooping, showToast]);
 
   const handleExportAudio = useCallback(async () => {
     if (!compiledSequence) {
-      alert("Please compile the sequence first before exporting audio.");
+      showToast("Please compile the sequence first before exporting audio.", "warning");
       return;
     }
     setIsExportingAudio(true);
@@ -490,13 +588,38 @@ function App() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      showToast("Audio exported to WAV successfully!", "success");
     } catch (err) {
       console.error("Audio export failed:", err);
-      alert("Failed to export audio. Check the console for more details.");
+      showToast("Failed to export audio. Check console for details.", "error");
     } finally {
       setIsExportingAudio(false);
     }
-  }, [compiledSequence, bpm, volume]);
+  }, [compiledSequence, bpm, volume, showToast]);
+
+  const handleExportMidi = useCallback(async () => {
+    if (!compiledSequence) {
+      showToast("Please compile the sequence first before exporting MIDI.", "warning");
+      return;
+    }
+
+    try {
+      const { exportSequenceToMidi } = await import('./midiExporter');
+      const midiBlob = exportSequenceToMidi(compiledSequence, bpm);
+      const url = URL.createObjectURL(midiBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `musicflow-project-${Date.now()}.mid`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("MIDI exported successfully (.mid)!", "success");
+    } catch (err) {
+      console.error("MIDI export failed:", err);
+      showToast("Failed to export MIDI. Check console for details.", "error");
+    }
+  }, [compiledSequence, bpm, showToast]);
 
   const importSequence = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -525,11 +648,12 @@ function App() {
             }
           });
           nodeIdCounter.current = maxId + 1;
+          showToast("Sequence imported successfully!", "success");
         } else {
-          alert("Invalid sequence file format.");
+          showToast("Invalid sequence file format.", "error");
         }
-      } catch (err) {
-        alert("Error parsing the file.");
+      } catch {
+        showToast("Error parsing the file.", "error");
       }
     };
     reader.readAsText(file);
@@ -537,16 +661,81 @@ function App() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, showToast]);
 
   const compileSequence = useCallback(() => {
     const result = compileGraph(nodes, edges);
     if (result.type === 'error') {
-      alert(result.message);
+      setErrorNodeIds(result.errorNodeIds || []);
+      const firstErrId = result.errorNodeIds?.[0];
+      showToast(
+        result.message,
+        'error',
+        firstErrId ? 'Focus Node' : undefined,
+        firstErrId && rfInstance ? () => {
+          const n = rfInstance.getNode(firstErrId);
+          if (n) {
+            rfInstance.setCenter(
+              (n.positionAbsolute?.x ?? n.position.x) + (n.width || 170) / 2,
+              (n.positionAbsolute?.y ?? n.position.y) + (n.height || 150) / 2,
+              { zoom: 1.1, duration: 600 }
+            );
+          }
+        } : undefined
+      );
       return;
     }
+    setErrorNodeIds([]);
     setCompiledSequence(result.sequence);
-  }, [nodes, edges]);
+    showToast("Sequence compiled successfully!", "success");
+  }, [nodes, edges, rfInstance, showToast]);
+
+  const handleRollVariation = useCallback(() => {
+    const result = compileGraph(nodes, edges, { isGenerative: true });
+    if (result.type === 'error') {
+      setErrorNodeIds(result.errorNodeIds || []);
+      const firstErrId = result.errorNodeIds?.[0];
+      showToast(
+        result.message,
+        'error',
+        firstErrId ? 'Focus Node' : undefined,
+        firstErrId && rfInstance ? () => {
+          const n = rfInstance.getNode(firstErrId);
+          if (n) {
+            rfInstance.setCenter(
+              (n.positionAbsolute?.x ?? n.position.x) + (n.width || 170) / 2,
+              (n.positionAbsolute?.y ?? n.position.y) + (n.height || 150) / 2,
+              { zoom: 1.1, duration: 600 }
+            );
+          }
+        } : undefined
+      );
+      return;
+    }
+    setErrorNodeIds([]);
+    setCompiledSequence(result.sequence);
+    const hasProbEdges = edges.some(e => typeof e.data?.probability === 'number' && e.data.probability < 1);
+    showToast(
+      hasProbEdges
+        ? `🎲 Rolled variation! (${result.sequence.scheduledNodes.length} active node sections)`
+        : 'Compiled sequence. Tip: Double-click connections to set chance % for generative branching!',
+      'success'
+    );
+  }, [nodes, edges, rfInstance, showToast]);
+
+  const displayNodes = useMemo(() => {
+    if (errorNodeIds.length === 0) return nodes;
+    const errSet = new Set(errorNodeIds);
+    return nodes.map((n) => {
+      if (errSet.has(n.id)) {
+        return {
+          ...n,
+          className: `${n.className || ''} node-error`.trim(),
+        };
+      }
+      return n;
+    });
+  }, [nodes, errorNodeIds]);
 
   return (
     <div className="app-container">
@@ -659,12 +848,14 @@ function App() {
         onExportJson={exportSequence}
         onExportAudio={handleExportAudio}
         isExportingAudio={isExportingAudio}
+        onExportMidi={handleExportMidi}
         onAddStart={addStartNode}
         onAddMusic={openAddNodeModal}
         onAddEnd={addEndNode}
         onLoadExamples={openExampleModal}
         onClearCanvas={clearCanvas}
         onCompile={compileSequence}
+        onRollVariation={handleRollVariation}
         compiledSequence={compiledSequence}
         isPlaying={isPlaying}
         isLoaded={isLoaded}
@@ -717,7 +908,7 @@ function App() {
           />
         )}
         <ReactFlow 
-          nodes={nodes} 
+          nodes={displayNodes} 
           edges={edges} 
           onNodesChange={onNodesChange} 
           onEdgesChange={onEdgesChange} 
@@ -746,6 +937,8 @@ function App() {
           <CanvasControls />
         </ReactFlow>
       </div>
+
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }

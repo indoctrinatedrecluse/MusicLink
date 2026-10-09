@@ -15,11 +15,11 @@
 
 - [Overview](#-overview)
 - [Key Features](#-key-features)
-  - [Visual DAG Canvas](#visual-dag-canvas)
-  - [Polyphonic DAG Sequencer & Compiler](#polyphonic-dag-sequencer--compiler)
-  - [Multi-Instrument Sound Engine](#multi-instrument-sound-engine)
+  - [Visual DAG Canvas & Interactive Tools](#visual-dag-canvas--interactive-tools)
+  - [Polyphonic DAG Sequencer & Generative Branching](#polyphonic-dag-sequencer--generative-branching)
+  - [Multi-Instrument Sound Engine & Channel Strip Mixing](#multi-instrument-sound-engine--channel-strip-mixing)
   - [Smart Graph Editing & Auto-Bridging](#smart-graph-editing--auto-bridging)
-  - [Audio & Project Export / Import](#audio--project-export--import)
+  - [Audio, MIDI & Project Export / Import](#audio-midi--project-export--import)
   - [Zero-Render Playback Visuals](#zero-render-playback-visuals)
 - [Architecture & Tech Stack](#-architecture--tech-stack)
 - [Project Directory Structure](#-project-directory-structure)
@@ -39,35 +39,45 @@
 Traditional Digital Audio Workstations (DAWs) rely strictly on linear horizontal timelines or rigid step-sequencer grids. **MusicLink** reimagines music composition as a flexible, graph-based flow:
 
 1. Place a **Start** node to anchor sequence execution.
-2. Connect one or more **Music Nodes** containing melodies, chord progressions, octave shifts, and instrument designations.
-3. Branch outgoing connections to trigger multiple voices, harmonies, or rhythm sections simultaneously.
+2. Connect one or more **Music Nodes** containing melodies, chord progressions, octave shifts, virtual piano step-input, and channel strip mixing.
+3. Branch outgoing connections to trigger multiple voices, harmonies, or rhythm sections simultaneously—or set chance probabilities (`🎲 50%`) for generative variations.
 4. Merge or terminate connections into an **End** node.
-5. Click **Compile Sequence** and **Play** to hear the graph rendered in real time through Web Audio synthesizers, with active-node illumination and a sweeping global playhead.
+5. Click **Compile Sequence** (or **🎲 Roll Variation**) and **Play** to hear the graph rendered in real time through Web Audio synthesizers, with active-node illumination and a sweeping global playhead.
+6. Export the final arrangement as a **.WAV** audio file or a multi-track **Standard MIDI (.mid)** file directly into any DAW.
 
 ---
 
 ## ⚡ Key Features
 
-### Visual DAG Canvas
+### Visual DAG Canvas & Interactive Tools
 - **Infinite Zoom & Pan**: Freely explore expansive musical maps with smooth mouse-wheel zooming, click-drag panning, and dedicated arrow-key panning.
 - **Node Types**:
   - 🟢 **Start Node**: Defines the entry point(s) of musical execution.
-  - 🎹 **Music Node**: The primary musical cell containing an editable title label, instrument badge, multi-line note sequences with duration control, underlying harmonic chords, instrument selection, octave transposition, and dynamic resizing via drag handles.
+  - 🎹 **Music Node**: The primary musical cell containing an editable title label, instrument badge, channel strip mixing (Mute, Solo, Volume), multi-line note sequences with duration control, virtual piano step-input, underlying harmonic chords, instrument selection, octave transposition, and dynamic resizing via drag handles.
   - 🔴 **End Node**: Defines the terminal boundary of an arrangement.
+- **Interactive Virtual Piano Step-Input**: An integrated 13-key visual piano keyboard widget with octave selectors (`C3`–`C6`), note duration toggles (`16n`, `8n`, `4n`, `2n`, `1n`), Rest button, step deletion, and instant polyphonic tone auditioning upon key click.
+- **In-Canvas Diagnostic Highlighting & Toasts**: Non-blocking toast alerts replace native alert dialogues. When compilation detects broken chains, unreachable nodes, or circular loops, offending nodes pulse with a vibrant red glow and dashed border, with a "Focus Node" button to center the viewport immediately.
 - **Node Labels & Visual Identity**: Customize node titles (e.g. *"Intro Melody"*, *"Bass Groove"*) with active instrument icon badges for effortless navigation across complex canvases.
 - **Live Note Validation**: Instant syntax validation highlights invalid note names or durations in real time with red borders and diagnostic messages before compile.
 - **Grid Snapping**: Automatically aligns nodes on a clean 20px &times; 20px grid.
-- **Auto-Scroll Tracking**: Automatically pans and centers the canvas onto the currently playing node in real time.
+- **De-Jittered Centroid Auto-Scroll**: Smoothly tracks parallel polyphonic voices by computing the average midpoint (centroid) across all actively playing nodes via `requestAnimationFrame`.
 
-### Polyphonic DAG Sequencer & Compiler
+### Polyphonic DAG Sequencer & Generative Branching
 - **Topological Sorting**: Evaluates the dependency tree using in-degree topological graph traversal, scheduling parallel branches simultaneously while waiting for merged paths before continuing.
+- **Generative Probability & Chance Edges**: Double-click any canvas connection to cycle through chance probabilities (`100% -> 🎲 75% -> 🎲 50% -> 🎲 25% -> 🚫 Off -> 100%`) with visual badge overlays.
+- **🎲 Roll Variation Engine**: Compiles a stochastic variation of your song by rolling edge probabilities, ensuring valid musical pathways while generating non-linear musical variations.
 - **Flexible Note Durations & Rests**: Write notes with custom duration specifiers (`C4:4n`, `E4:2n`, `G4:1m`, `A4:16n`, dotted notes) and musical rests (`R`, `R:4n`, `R:2n`), alongside polyphonic chord clusters (`C4,E4,G4:2n`).
 - **Reachability & Continuity Validation**: Validates that all music nodes exist on a continuous path between a `Start` and `End` node before compilation.
 - **Loop & Cycle Detection**: Proactively detects circular loops/dependencies, safeguarding the audio engine and displaying user-friendly warnings.
 - **Auto Recompile Invalidation**: Automatically clears compiled sequences upon node or wire changes to guarantee that playback always matches the current canvas state.
 
-### Multi-Instrument Sound Engine
-- **Shared Synthesizer Profiles**: Centralized instrument configurations ensuring 100% audio consistency between real-time browser playback and offline WAV rendering.
+### Multi-Instrument Sound Engine & Channel Strip Mixing
+- **Channel Strip Mixing per Node**: Each Music node includes its own dedicated mixing strip:
+  - 🎚️ **Volume Slider**: Adjusts node output gain and scales note velocities (0 – 100%).
+  - 🔇 **Mute (M)**: Silences the node without altering canvas topology or visual timeline syncing.
+  - 🌟 **Solo (S)**: Isolates one or more nodes, silencing all non-soloed tracks simultaneously.
+- **Master Bus Limiter**: Hard ceiling master limiter (`Tone.Limiter(-1)`) prevents digital clipping when multi-track polyphonic chords sum together, preserving clean dynamics.
+- **Shared Synthesizer Profiles**: Centralized instrument configurations ensuring 100% audio consistency between real-time browser playback and offline rendering:
   - 🎹 **Piano**: Clean polyphonic synthesizer with balanced attack, decay, and sustain.
   - 🎸 **Guitar**: Triangle-wave synthesizer with plucked attack, extended decay, and acoustic resonance.
   - 🌬️ **Flute**: Smooth sine-wave synthesizer with soft attack and prolonged sustain.
@@ -81,14 +91,15 @@ Traditional Digital Audio Workstations (DAWs) rely strictly on linear horizontal
 
 ### Smart Graph Editing & Auto-Bridging
 - **Auto-Bridging**: Deleting an intermediate node or entire chain automatically bridges incoming predecessors to outgoing successors, keeping the musical chain intact.
-- **Edge Toggling**: Double-clicking an edge disables or re-enables it without destroying the connection (rendered as a faded, dashed line).
+- **Edge Chance & Toggling**: Double-clicking an edge cycles through probability states or disables connections without destroying wiring.
 - **Edge Reconnection**: Drag existing edge endpoints to detach and re-route connections to other nodes.
 - **Right-Click Context Menu**:
   - ▶️ **Preview Node**: Plays a single isolated node immediately.
   - 📋 **Duplicate / Copy Chain**: Duplicates single nodes or multi-selected node chains with internal edges preserved.
   - 🗑️ **Delete / Delete Chain (Bridge)**: Removes selected nodes and heals the connection gaps.
 
-### Audio & Project Export / Import
+### Audio, MIDI & Project Export / Import
+- **Multi-Track Standard MIDI (.mid) Export**: Zero-dependency, pure TypeScript SMF Type 1 multi-track MIDI exporter. Writes Conductor tempo/time-signature tracks, GM instrument program changes, channel assignments, note velocities, chords, and durations for any DAW (Ableton, Logic, FL Studio, GarageBand, Reaper).
 - **Direct WAV Audio Export**: Renders compiled sequences offline using `Tone.Offline` and encodes standard 16-bit PCM stereo WAV files using a built-in browser `DataView` encoder.
 - **Project Serialization (JSON)**: Save compositions to `.json` files and re-import them anytime.
 - **Automatic Session Backup**: Automatic 50-step undo/redo stack (`Ctrl+Z` / `Ctrl+Y`) continuously synchronized with `sessionStorage`.
@@ -126,26 +137,29 @@ MusicLink/
 │   │   ├── CanvasControls.tsx  # In-canvas HUD with navigation shortcuts
 │   │   ├── EndNode.tsx         # Red terminal anchor node
 │   │   ├── LoadExampleModal.tsx# Example sequence selector modal
-│   │   ├── MusicNode.tsx       # Core editable node with notes, durations, chords, and labels
+│   │   ├── MusicNode.tsx       # Core editable node with notes, chords, mixing strip & piano
 │   │   ├── MusicPlayer.tsx     # Play/Stop transport button component
 │   │   ├── NodeContextMenu.tsx # Context menu for node actions (Preview, Duplicate, Delete)
 │   │   ├── StartNode.tsx       # Green entry anchor node
-│   │   ├── Toolbar.tsx         # Top transport control bar and file management HUD
+│   │   ├── Toast.tsx           # Non-blocking diagnostic banner with node focus actions
+│   │   ├── Toolbar.tsx         # Top transport control bar, generative roll & file management
+│   │   ├── VirtualPiano.tsx    # 13-key interactive piano step-input keyboard widget
 │   │   └── sequences.ts        # Reference melody sequences (Für Elise, etc.)
 │   ├── types/
 │   │   └── music.ts            # Musical data models, pitch classes, and interfaces
 │   ├── 01_fur_elise.json ...   # 12 pre-packaged example composition files
 │   ├── 12_orchestral_duet.json
-│   ├── App.css                 # Application-wide styles and animations
+│   ├── App.css                 # Application-wide styles, animations and glowing error outlines
 │   ├── App.tsx                 # Application state, canvas lifecycle, and routing
-│   ├── audioExporter.ts        # Tone.Offline WAV renderer & PCM byte encoder
-│   ├── compiler.ts             # Pure DAG compiler, reachability validator, and cycle detector
+│   ├── audioExporter.ts        # Tone.Offline WAV renderer & PCM byte encoder (code-split)
+│   ├── compiler.ts             # Pure DAG compiler, reachability validator, and stochastic roll engine
 │   ├── flowUtils.ts            # Canvas serialization, sessionStorage undo/redo state
 │   ├── index.ts                # Example sequence registry
 │   ├── main.tsx                # React entrypoint
+│   ├── midiExporter.ts         # Zero-dependency multi-track Standard MIDI (.mid) encoder (code-split)
 │   ├── musicUtils.ts           # Music notation parsing, duration step mapping, and note validation
 │   ├── synthProfiles.ts        # Centralized synthesizer configurations (Guitar, Flute, etc.)
-│   └── useAudioEngine.ts       # Central audio hook managing synths and Transport
+│   └── useAudioEngine.ts       # Central audio hook with master limiter, polyphony & centroid pan
 ├── eslint.config.js            # ESLint flat configuration
 ├── index.html                  # HTML template
 ├── package.json                # Project dependencies and npm scripts

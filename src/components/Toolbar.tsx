@@ -23,6 +23,7 @@ export interface ToolbarProps {
   onExportJson: () => void;
   onExportAudio: () => void;
   isExportingAudio: boolean;
+  onExportMidi: () => void;
   // Node creation
   onAddStart: () => void;
   onAddMusic: () => void;
@@ -31,6 +32,7 @@ export interface ToolbarProps {
   onClearCanvas: () => void;
   // Compilation & playback
   onCompile: () => void;
+  onRollVariation: () => void;
   compiledSequence: CompiledSequence | null;
   isPlaying: boolean;
   isLoaded: boolean;
@@ -56,10 +58,10 @@ export function Toolbar({
   canUndo, onUndo,
   canRedo, onRedo,
   fileInputRef, onFileChange,
-  onExportJson, onExportAudio, isExportingAudio,
+  onExportJson, onExportAudio, isExportingAudio, onExportMidi,
   onAddStart, onAddMusic, onAddEnd,
   onLoadExamples, onClearCanvas,
-  onCompile,
+  onCompile, onRollVariation,
   compiledSequence, isPlaying, isLoaded, onPlay, onStop,
 }: ToolbarProps) {
   return (
@@ -144,6 +146,13 @@ export function Toolbar({
       >
         {isExportingAudio ? 'Exporting...' : 'Export Audio'}
       </button>
+      <button
+        onClick={onExportMidi}
+        disabled={!compiledSequence}
+        title="Export the compiled sequence as a multi-track Standard MIDI (.mid) file"
+      >
+        Export MIDI
+      </button>
 
       {/* ── Node Creation ──────────────────────────────────────────── */}
       <button onClick={onAddStart} title="Add a Start node to begin the sequence">+ Start</button>
@@ -155,6 +164,19 @@ export function Toolbar({
       {/* ── Compilation & Playback ─────────────────────────────────── */}
       <button onClick={onCompile} title="Compile and prepare the sequence for playback">
         Compile Sequence
+      </button>
+      <button
+        onClick={onRollVariation}
+        title="Roll a random variation based on edge probabilities (double-click connections to cycle chance %)"
+        style={{
+          background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)',
+          color: 'white',
+          border: 'none',
+          boxShadow: '0 2px 4px rgba(108, 92, 231, 0.3)',
+          fontWeight: 'bold',
+        }}
+      >
+        🎲 Roll Variation
       </button>
       {compiledSequence && (
         <MusicPlayer

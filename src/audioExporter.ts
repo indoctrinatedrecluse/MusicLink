@@ -25,20 +25,31 @@ export async function renderSequenceToWav(sequence: CompiledSequence, bpm: numbe
     // Convert the 0-100 linear volume to decibels
     const volDb = volume === 0 ? -Infinity : 20 * Math.log10(volume / 100);
     const volNode = new Tone.Volume(volDb).toDestination();
+    const limiter = new Tone.Limiter(-1).connect(volNode);
 
-    // Instantiate synths identically to MusicPlayer so they match
+    // Instantiate synths connected through the master limiter
     const synths: Record<string, Tone.PolySynth> = {
-      Piano: new Tone.PolySynth(Tone.Synth).connect(volNode),
-      Guitar: new Tone.PolySynth(Tone.Synth, GUITAR_SYNTH_OPTIONS).connect(volNode),
-      Flute: new Tone.PolySynth(Tone.Synth, FLUTE_SYNTH_OPTIONS).connect(volNode),
-      Drums: new Tone.PolySynth(Tone.MembraneSynth).connect(volNode)
+      Piano: new Tone.PolySynth(Tone.Synth).connect(limiter),
+      Guitar: new Tone.PolySynth(Tone.Synth, GUITAR_SYNTH_OPTIONS).connect(limiter),
+      Flute: new Tone.PolySynth(Tone.Synth, FLUTE_SYNTH_OPTIONS).connect(limiter),
+      Drums: new Tone.PolySynth(Tone.MembraneSynth).connect(limiter)
     };
+
+    const hasAnySolo = sequence.scheduledNodes.some(n => n.data?.isSoloed);
 
     for (const snode of sequence.scheduledNodes) {
       const notesInNode = (snode.data?.sequence || '').split('\n').filter((n: string) => n.trim() !== '');
       const chordsInNode = (snode.data?.chord || '').split('\n').filter((c: string) => c.trim() !== '');
 
       if (notesInNode.length === 0) continue;
+
+      const isSoloed = !!snode.data?.isSoloed;
+      const isMuted = !!snode.data?.isMuted;
+      const shouldPlaySound = hasAnySolo ? isSoloed : !isMuted;
+      const nodeVol = snode.data?.volume !== undefined ? Math.max(0, Math.min(100, snode.data.volume)) : 100;
+      const velocity = nodeVol / 100;
+
+      if (!shouldPlaySound || velocity === 0) continue;
 
       const startSecs = snode.startTime * stepSecs;
       const nodeDurationSecs = snode.duration * stepSecs;
@@ -53,7 +64,7 @@ export async function renderSequenceToWav(sequence: CompiledSequence, bpm: numbe
         const chordData = TonalChord.get(mainChord);
         if (!chordData.empty) {
           const chordNotes = chordData.notes.map(n => shiftNote(`${n}3`));
-          activeSynth.triggerAttackRelease(chordNotes, nodeDurationSecs, startSecs);
+          activeSynth.triggerAttackRelease(chordNotes, nodeDurationSecs, startSecs, velocity * 0.7);
         }
       }
 
@@ -68,7 +79,8 @@ export async function renderSequenceToWav(sequence: CompiledSequence, bpm: numbe
           activeSynth.triggerAttackRelease(
             shifted.length === 1 ? shifted[0] : shifted,
             step.durationNotation,
-            startSecs + noteOffset
+            startSecs + noteOffset,
+            velocity
           );
         }
         noteOffset += stepDurationSecs;

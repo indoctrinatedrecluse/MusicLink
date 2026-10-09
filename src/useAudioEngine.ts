@@ -21,6 +21,7 @@ export interface CompiledSequence {
 
 export function useAudioEngine(volume: number) {
   const synths = useRef<Record<string, Tone.PolySynth>>({});
+  const limiter = useRef<Tone.Limiter | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -31,12 +32,14 @@ export function useAudioEngine(volume: number) {
   });
 
   useEffect(() => {
-    // Initialize the synthesizers globally once
+    // Master Limiter to prevent clipping when multiple polyphonic instruments overlap
+    limiter.current = new Tone.Limiter(-1).toDestination();
+
     synths.current = {
-      Piano: new Tone.PolySynth(Tone.Synth).toDestination(),
-      Guitar: new Tone.PolySynth(Tone.Synth, GUITAR_SYNTH_OPTIONS).toDestination(),
-      Flute: new Tone.PolySynth(Tone.Synth, FLUTE_SYNTH_OPTIONS).toDestination(),
-      Drums: new Tone.PolySynth(Tone.MembraneSynth).toDestination()
+      Piano: new Tone.PolySynth(Tone.Synth).connect(limiter.current),
+      Guitar: new Tone.PolySynth(Tone.Synth, GUITAR_SYNTH_OPTIONS).connect(limiter.current),
+      Flute: new Tone.PolySynth(Tone.Synth, FLUTE_SYNTH_OPTIONS).connect(limiter.current),
+      Drums: new Tone.PolySynth(Tone.MembraneSynth).connect(limiter.current)
     };
     setIsLoaded(true);
 
@@ -53,6 +56,7 @@ export function useAudioEngine(volume: number) {
 
     return () => {
       Object.values(synths.current).forEach(s => s.dispose());
+      limiter.current?.dispose();
       Tone.Transport.stop();
       Tone.Transport.cancel();
       Tone.Transport.off('stop', onStop);
@@ -95,11 +99,19 @@ export function useAudioEngine(volume: number) {
       Tone.Draw.schedule(() => callbacks.current.onNodePlay('CLEAR_ALL', false), time);
     }, 0);
 
+    const hasAnySolo = sequence.scheduledNodes.some(n => n.data?.isSoloed);
+
     for (const snode of sequence.scheduledNodes) {
       const notesInNode = (snode.data?.sequence || '').split('\n').filter((n: string) => n.trim() !== '');
       const chordsInNode = (snode.data?.chord || '').split('\n').filter((c: string) => c.trim() !== '');
 
       if (notesInNode.length === 0) continue;
+
+      const isSoloed = !!snode.data?.isSoloed;
+      const isMuted = !!snode.data?.isMuted;
+      const shouldPlaySound = hasAnySolo ? isSoloed : !isMuted;
+      const nodeVol = snode.data?.volume !== undefined ? Math.max(0, Math.min(100, snode.data.volume)) : 100;
+      const velocity = nodeVol / 100;
 
       const startSecs = snode.startTime * stepSecs;
       const nodeDurationSecs = snode.duration * stepSecs;
@@ -113,29 +125,32 @@ export function useAudioEngine(volume: number) {
       Tone.Transport.schedule((time) => {
         Tone.Draw.schedule(() => callbacks.current.onNodePlay(snode.id, true, nodeDurationSecs), time);
         
-        if (mainChord) {
-          const chordData = TonalChord.get(mainChord);
-          if (!chordData.empty) {
-            const chordNotes = chordData.notes.map(n => shiftNote(`${n}3`));
-            activeSynth?.triggerAttackRelease(chordNotes, nodeDurationSecs, time);
+        if (shouldPlaySound && velocity > 0) {
+          if (mainChord) {
+            const chordData = TonalChord.get(mainChord);
+            if (!chordData.empty) {
+              const chordNotes = chordData.notes.map(n => shiftNote(`${n}3`));
+              activeSynth?.triggerAttackRelease(chordNotes, nodeDurationSecs, time, velocity * 0.7);
+            }
           }
-        }
 
-        let noteOffset = 0;
-        for (const rawNote of notesInNode) {
-          const step = parseNoteStep(rawNote);
-          if (!step) continue;
-          const stepDurationSecs = step.stepUnits * stepSecs;
+          let noteOffset = 0;
+          for (const rawNote of notesInNode) {
+            const step = parseNoteStep(rawNote);
+            if (!step) continue;
+            const stepDurationSecs = step.stepUnits * stepSecs;
 
-          if (!step.isRest && step.pitches.length > 0) {
-            const shifted = step.pitches.map(shiftNote);
-            activeSynth?.triggerAttackRelease(
-              shifted.length === 1 ? shifted[0] : shifted,
-              step.durationNotation,
-              time + noteOffset
-            );
+            if (!step.isRest && step.pitches.length > 0) {
+              const shifted = step.pitches.map(shiftNote);
+              activeSynth?.triggerAttackRelease(
+                shifted.length === 1 ? shifted[0] : shifted,
+                step.durationNotation,
+                time + noteOffset,
+                velocity
+              );
+            }
+            noteOffset += stepDurationSecs;
           }
-          noteOffset += stepDurationSecs;
         }
       }, startSecs);
       

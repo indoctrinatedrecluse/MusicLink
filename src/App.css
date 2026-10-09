@@ -63,3 +63,21 @@ button:disabled {
   opacity: 0.5;
   background-color: #999;
 }
+
+/* Diagnostic error highlighting for invalid/cyclic/unreachable nodes */
+.react-flow__node.node-error {
+  border-color: #f44336 !important;
+  box-shadow: 0 0 14px 4px rgba(244, 67, 54, 0.7) !important;
+  animation: nodeErrorPulse 1.6s infinite ease-in-out;
+}
+
+@keyframes nodeErrorPulse {
+  0% { transform: scale(1); box-shadow: 0 0 8px 2px rgba(244, 67, 54, 0.5); }
+  50% { transform: scale(1.02); box-shadow: 0 0 16px 5px rgba(244, 67, 54, 0.85); }
+  100% { transform: scale(1); box-shadow: 0 0 8px 2px rgba(244, 67, 54, 0.5); }
+}
+
+@keyframes toastFadeIn {
+  from { opacity: 0; transform: translate(-50%, 15px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}

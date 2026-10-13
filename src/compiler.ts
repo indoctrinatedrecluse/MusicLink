@@ -186,7 +186,7 @@ export function compileGraph(
     let duration = 0;
 
     if (node.type === 'musicNode') {
-      const data = node.data as { sequence?: string; instrument?: string; octave?: number; label?: string };
+      const data = node.data as { sequence?: string; instrument?: string; octave?: number; label?: string; repeat?: number };
       const rawLines = (data.sequence ?? '')
         .split('\n')
         .map(l => l.trim())
@@ -196,8 +196,10 @@ export function compileGraph(
         .map(parseNoteStep)
         .filter((s): s is NonNullable<typeof s> => s !== null);
 
-      // Duration is measured in 8th-note steps; converted to seconds by the audio engine
-      duration = parsedSteps.reduce((acc, step) => acc + step.stepUnits, 0);
+      // Duration is measured in 8th-note steps; multiplied by repeat factor
+      const singlePassDuration = parsedSteps.reduce((acc, step) => acc + step.stepUnits, 0);
+      const repeatCount = Math.max(1, Math.min(32, Math.floor(Number(data.repeat) || 1)));
+      duration = singlePassDuration * repeatCount;
 
       scheduledNodes.push({
         id: node.id,

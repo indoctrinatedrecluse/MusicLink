@@ -1,0 +1,45 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 500, "y": 30 } },
+
+    { "id": "vw-b1", "type": "musicNode", "data": { "label": "Basso: Shivering Pedal", "sequence": "F2:8n\nF2:8n\nF2:8n\nF2:8n\nF2:8n\nF2:8n\nF2:8n\nF2:8n", "chord": "Fm", "instrument": "Bass", "octave": 0, "volume": 85, "repeat": 2 }, "position": { "x": 100, "y": 180 } },
+    { "id": "vw-b2", "type": "musicNode", "data": { "label": "Basso: Descending Walk", "sequence": "Db2:4n\nC2:4n\nBb1:4n\nAb1:4n\nG1:4n\nC2:4n\nF1:2n", "chord": "Db", "instrument": "Bass", "octave": 0, "volume": 90 }, "position": { "x": 100, "y": 380 } },
+    { "id": "vw-b3", "type": "musicNode", "data": { "label": "Basso: Dramatic Pause", "sequence": "R:4n\nC2:8n\nC2:8n\nR:4n\nC2:8n\nC2:8n\nC2:4n\nC2:4n\nC2:2n", "chord": "C", "instrument": "Bass", "octave": 0, "volume": 90 }, "position": { "x": 100, "y": 580 } },
+    { "id": "vw-b4", "type": "musicNode", "data": { "label": "Basso: Grand Cadence", "sequence": "F1:4n\nAb1:4n\nC2:4n\nF2:4n\nF1:1n", "chord": "Fm", "instrument": "Bass", "octave": 0, "volume": 95 }, "position": { "x": 100, "y": 780 } },
+
+    { "id": "vw-s1", "type": "musicNode", "data": { "label": "Strings: Chilling Tremolo", "sequence": "F4:16n\nF4:16n\nF4:16n\nF4:16n\nAb4:16n\nAb4:16n\nAb4:16n\nAb4:16n\nC5:16n\nC5:16n\nC5:16n\nC5:16n\nF5:16n\nF5:16n\nF5:16n\nF5:16n", "chord": "Fm", "instrument": "Strings", "octave": 0, "volume": 85, "repeat": 2 }, "position": { "x": 480, "y": 180 } },
+    { "id": "vw-s2", "type": "musicNode", "data": { "label": "Strings: Soaring Run", "sequence": "F5:16n\nE5:16n\nF5:16n\nG5:16n\nAb5:16n\nBb5:16n\nC6:16n\nDb6:16n\nC6:8n\nAb5:8n\nF5:8n\nDb5:8n\nC5:2n", "chord": "Db", "instrument": "Strings", "octave": 0, "volume": 90 }, "position": { "x": 480, "y": 380 } },
+    { "id": "vw-s3", "type": "musicNode", "data": { "label": "Strings: Storm Gusts", "sequence": "R:4n\nG5:16n\nAb5:16n\nBb5:16n\nAb5:16n\nG5:4n\nC6:4n\nBb5:16n\nAb5:16n\nG5:16n\nF5:16n\nE5:2n", "chord": "C7", "instrument": "Strings", "octave": 0, "volume": 95 }, "position": { "x": 480, "y": 580 } },
+    { "id": "vw-s4", "type": "musicNode", "data": { "label": "Strings: Final Resolution", "sequence": "F5:16n\nAb5:16n\nC6:16n\nF6:16n\nC6:8n\nAb5:8n\nF5,Ab5,C6,F6:1n", "chord": "Fm", "instrument": "Strings", "octave": 0, "volume": 95 }, "position": { "x": 480, "y": 780 } },
+
+    { "id": "vw-p1", "type": "musicNode", "data": { "label": "Harpsichord: Cold Pulses", "sequence": "F3,Ab3,C4:8n\nF3,Ab3,C4:8n\nF3,Ab3,C4:8n\nF3,Ab3,C4:8n\nF3,Ab3,C4:8n\nF3,Ab3,C4:8n\nF3,Ab3,C4:8n\nF3,Ab3,C4:8n", "chord": "Fm", "instrument": "Piano", "octave": 0, "volume": 75, "repeat": 2 }, "position": { "x": 860, "y": 180 } },
+    { "id": "vw-p2", "type": "musicNode", "data": { "label": "Harpsichord: Harmonic Waves", "sequence": "Db3,F3,Ab3:4n\nC3,E3,G3:4n\nBb2,Db3,F3:4n\nAb2,C3,Eb3:4n\nG2,B2,D3:4n\nC3,E3,G3:4n\nF2,Ab2,C3:2n", "chord": "Db", "instrument": "Piano", "octave": 0, "volume": 80 }, "position": { "x": 860, "y": 380 } },
+    { "id": "vw-p3", "type": "musicNode", "data": { "label": "Harpsichord: Dominant Tension", "sequence": "R:4n\nC3,E3,G3,Bb3:8n\nC3,E3,G3,Bb3:8n\nR:4n\nC3,E3,G3,Bb3:8n\nC3,E3,G3,Bb3:8n\nC3,E3,G3,Bb3:2n", "chord": "C7", "instrument": "Piano", "octave": 0, "volume": 85 }, "position": { "x": 860, "y": 580 } },
+    { "id": "vw-p4", "type": "musicNode", "data": { "label": "Harpsichord: Fierce Unison", "sequence": "F2,Ab2,C3,F3:4n\nF3,Ab3,C4,F4:4n\nF3,Ab3,C4,F4:2n\nF2,C3,F3:1n", "chord": "Fm", "instrument": "Piano", "octave": 0, "volume": 90 }, "position": { "x": 860, "y": 780 } },
+
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 500, "y": 980 } }
+  ],
+  "edges": [
+    { "id": "e-start-b", "source": "start-1", "target": "vw-b1" },
+    { "id": "e-start-s", "source": "start-1", "target": "vw-s1" },
+    { "id": "e-start-p", "source": "start-1", "target": "vw-p1" },
+
+    { "id": "e-b1-b2", "source": "vw-b1", "target": "vw-b2" },
+    { "id": "e-b2-b3", "source": "vw-b2", "target": "vw-b3" },
+    { "id": "e-b3-b4", "source": "vw-b3", "target": "vw-b4" },
+    { "id": "e-b4-end", "source": "vw-b4", "target": "end-1" },
+
+    { "id": "e-s1-s2", "source": "vw-s1", "target": "vw-s2" },
+    { "id": "e-s2-s3", "source": "vw-s2", "target": "vw-s3" },
+    { "id": "e-s3-s4", "source": "vw-s3", "target": "vw-s4" },
+    { "id": "e-s4-end", "source": "vw-s4", "target": "end-1" },
+
+    { "id": "e-p1-p2", "source": "vw-p1", "target": "vw-p2" },
+    { "id": "e-p2-p3", "source": "vw-p2", "target": "vw-p3" },
+    { "id": "e-p3-p4", "source": "vw-p3", "target": "vw-p4" },
+    { "id": "e-p4-end", "source": "vw-p4", "target": "end-1" }
+  ],
+  "bpm": 138,
+  "volume": 85,
+  "isLooping": true
+}

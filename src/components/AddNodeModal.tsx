@@ -5,7 +5,7 @@ import { INSTRUMENT_OPTIONS, type Instrument } from '../types/music';
 export interface AddNodeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { label?: string; sequence: string; chord: string; instrument: Instrument; octave: number }) => void;
+  onSave: (data: { label?: string; sequence: string; chord: string; instrument: Instrument; octave: number; repeat?: number }) => void;
 }
 
 export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
@@ -14,6 +14,7 @@ export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
   const [chord, setChord] = useState('');
   const [instrument, setInstrument] = useState<Instrument>('Piano');
   const [octave, setOctave] = useState<number>(0);
+  const [repeat, setRepeat] = useState<number>(1);
   const [showPiano, setShowPiano] = useState(false);
 
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
@@ -25,13 +26,14 @@ export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
       setChord('');
       setInstrument('Piano');
       setOctave(0);
+      setRepeat(1);
       setShowPiano(false);
     }
   }
 
   const handleSave = useCallback(() => {
-    onSave({ label: label.trim() || undefined, sequence, chord, instrument, octave });
-  }, [label, sequence, chord, instrument, octave, onSave]);
+    onSave({ label: label.trim() || undefined, sequence, chord, instrument, octave, repeat });
+  }, [label, sequence, chord, instrument, octave, repeat, onSave]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -80,6 +82,18 @@ export function AddNodeModal({ isOpen, onClose, onSave }: AddNodeModalProps) {
               <option value="0">0</option>
               <option value="1">+1</option>
               <option value="2">+2</option>
+            </select>
+          </label>
+          <label style={{ width: '80px' }}>
+            Loop / Repeat:
+            <select value={repeat} onChange={e => setRepeat(Number(e.target.value))} style={{ marginTop: '5px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontFamily: 'sans-serif', width: '100%' }}>
+              <option value="1">1x</option>
+              <option value="2">2x</option>
+              <option value="3">3x</option>
+              <option value="4">4x</option>
+              <option value="6">6x</option>
+              <option value="8">8x</option>
+              <option value="16">16x</option>
             </select>
           </label>
         </div>

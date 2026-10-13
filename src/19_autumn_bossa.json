@@ -1,0 +1,56 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 650, "y": 30 } },
+
+    { "id": "jb-1", "type": "musicNode", "data": { "label": "Walking Bass: ii-V-I", "sequence": "C2:4n\nE2:4n\nF2:4n\nF#2:4n\nG2:4n\nA2:4n\nBb2:4n\nB2:4n", "chord": "Cm7", "instrument": "Bass", "octave": 0, "volume": 85 }, "position": { "x": 100, "y": 180 } },
+    { "id": "jb-2", "type": "musicNode", "data": { "label": "Walking Bass: Major iv-VII", "sequence": "Bb2:4n\nD2:4n\nEb2:4n\nE2:4n\nF2:4n\nG2:4n\nAb2:4n\nA2:4n", "chord": "Bbmaj7", "instrument": "Bass", "octave": 0, "volume": 85 }, "position": { "x": 100, "y": 380 } },
+    { "id": "jb-3", "type": "musicNode", "data": { "label": "Walking Bass: Minor ii-V", "sequence": "A2:4n\nC2:4n\nEb2:4n\nE2:4n\nD2:4n\nF#2:4n\nAb2:4n\nA2:4n", "chord": "Am7b5", "instrument": "Bass", "octave": 0, "volume": 85 }, "position": { "x": 100, "y": 580 } },
+    { "id": "jb-4", "type": "musicNode", "data": { "label": "Walking Bass: Tonic Cadence", "sequence": "G2:4n\nBb2:4n\nD2:4n\nF2:4n\nG2:2n\nG1:2n", "chord": "Gm7", "instrument": "Bass", "octave": 0, "volume": 90 }, "position": { "x": 100, "y": 780 } },
+
+    { "id": "jg-1", "type": "musicNode", "data": { "label": "Guitar: Bossa Chords 1", "sequence": "R:8n\nC4,Eb4,G4,Bb4:4n\nR:8n\nF3,A3,C4,Eb4:4n\nR:8n\nC4,Eb4,G4,Bb4:8n\nF3,A3,C4,Eb4:4n", "chord": "Cm7", "instrument": "Guitar", "octave": 0, "volume": 80 }, "position": { "x": 450, "y": 180 } },
+    { "id": "jg-2", "type": "musicNode", "data": { "label": "Guitar: Bossa Chords 2", "sequence": "R:8n\nBb3,D4,F4,A4:4n\nR:8n\nEb3,G3,Bb3,D4:4n\nR:8n\nBb3,D4,F4,A4:8n\nEb3,G3,Bb3,D4:4n", "chord": "Bbmaj7", "instrument": "Guitar", "octave": 0, "volume": 80 }, "position": { "x": 450, "y": 380 } },
+    { "id": "jg-3", "type": "musicNode", "data": { "label": "Guitar: Bossa Chords 3", "sequence": "R:8n\nA3,C4,Eb4,G4:4n\nR:8n\nD3,F#3,C4,Eb4:4n\nR:8n\nA3,C4,Eb4,G4:8n\nD3,F#3,C4,Eb4:4n", "chord": "Am7b5", "instrument": "Guitar", "octave": 0, "volume": 80 }, "position": { "x": 450, "y": 580 } },
+    { "id": "jg-4", "type": "musicNode", "data": { "label": "Guitar: Minor Resolution", "sequence": "R:8n\nG3,Bb3,D4,F4:4n\nR:8n\nD3,F#3,C4,Eb4:4n\nG3,Bb3,D4,F4:2n\nG3,Bb3,D4:2n", "chord": "Gm7", "instrument": "Guitar", "octave": 0, "volume": 85 }, "position": { "x": 450, "y": 780 } },
+
+    { "id": "jf-1", "type": "musicNode", "data": { "label": "Flute: Bossa Lead A", "sequence": "G4:4n\nA4:8n\nBb4:8n\nC5:2n\nF4:4n\nG4:8n\nA4:8n\nBb4:2n", "chord": "Cm7", "instrument": "Flute", "octave": 0, "volume": 85 }, "position": { "x": 800, "y": 180 } },
+    { "id": "jf-2", "type": "musicNode", "data": { "label": "Flute: Bossa Lead B", "sequence": "Eb4:4n\nF4:8n\nG4:8n\nA4:2n\nD4:2n\nE4:4n\nF#4:4n", "chord": "Bbmaj7", "instrument": "Flute", "octave": 0, "volume": 85 }, "position": { "x": 800, "y": 380 } },
+    { "id": "jf-3", "type": "musicNode", "data": { "label": "Flute: Syncopated Turn", "sequence": "G4:8n\nBb4:8n\nD5:8n\nF5:8n\nEb5:4n\nC5:4n\nF#4:8n\nA4:8n\nC5:8n\nEb5:8n\nD5:2n", "chord": "Am7b5", "instrument": "Flute", "octave": 0, "volume": 85 }, "position": { "x": 800, "y": 580 } },
+    { "id": "jf-4", "type": "musicNode", "data": { "label": "Flute: Warm Cadence", "sequence": "Bb4:4n\nA4:8n\nG4:8n\nD4:2n\nG4:1n", "chord": "Gm7", "instrument": "Flute", "octave": 0, "volume": 90 }, "position": { "x": 800, "y": 780 } },
+
+    { "id": "jd-1", "type": "musicNode", "data": { "label": "Drums: Bossa Pattern 1", "sequence": "C2:4n\nD2:8n\nF#2:8n\nC2:4n\nD2:8n\nF#2:8n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 75, "repeat": 2 }, "position": { "x": 1150, "y": 180 } },
+    { "id": "jd-2", "type": "musicNode", "data": { "label": "Drums: Bossa Pattern 2", "sequence": "C2:4n\nD2:8n\nF#2:8n\nC2:4n\nD2:8n\nF#2:8n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 75, "repeat": 2 }, "position": { "x": 1150, "y": 380 } },
+    { "id": "jd-3", "type": "musicNode", "data": { "label": "Drums: Bossa Pattern 3", "sequence": "C2:4n\nD2:8n\nF#2:8n\nC2:4n\nD2:8n\nF#2:8n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 75, "repeat": 2 }, "position": { "x": 1150, "y": 580 } },
+    { "id": "jd-4", "type": "musicNode", "data": { "label": "Drums: Ride Cymbal Fill", "sequence": "C2:4n\nD2:8n\nF#2:8n\nF#2:8n\nF#2:8n\nD2:4n\nC2,D2:2n\nC2:2n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 80 }, "position": { "x": 1150, "y": 780 } },
+
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 650, "y": 980 } }
+  ],
+  "edges": [
+    { "id": "e-start-jb", "source": "start-1", "target": "jb-1" },
+    { "id": "e-start-jg", "source": "start-1", "target": "jg-1" },
+    { "id": "e-start-jf", "source": "start-1", "target": "jf-1" },
+    { "id": "e-start-jd", "source": "start-1", "target": "jd-1" },
+
+    { "id": "e-jb1-jb2", "source": "jb-1", "target": "jb-2" },
+    { "id": "e-jb2-jb3", "source": "jb-2", "target": "jb-3" },
+    { "id": "e-jb3-jb4", "source": "jb-3", "target": "jb-4" },
+    { "id": "e-jb4-end", "source": "jb-4", "target": "end-1" },
+
+    { "id": "e-jg1-jg2", "source": "jg-1", "target": "jg-2" },
+    { "id": "e-jg2-jg3", "source": "jg-2", "target": "jg-3" },
+    { "id": "e-jg3-jg4", "source": "jg-3", "target": "jg-4" },
+    { "id": "e-jg4-end", "source": "jg-4", "target": "end-1" },
+
+    { "id": "e-jf1-jf2", "source": "jf-1", "target": "jf-2" },
+    { "id": "e-jf2-jf3", "source": "jf-2", "target": "jf-3" },
+    { "id": "e-jf3-jf4", "source": "jf-3", "target": "jf-4" },
+    { "id": "e-jf4-end", "source": "jf-4", "target": "end-1" },
+
+    { "id": "e-jd1-jd2", "source": "jd-1", "target": "jd-2" },
+    { "id": "e-jd2-jd3", "source": "jd-2", "target": "jd-3" },
+    { "id": "e-jd3-jd4", "source": "jd-3", "target": "jd-4" },
+    { "id": "e-jd4-end", "source": "jd-4", "target": "end-1" }
+  ],
+  "bpm": 112,
+  "volume": 85,
+  "isLooping": true
+}

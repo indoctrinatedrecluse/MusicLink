@@ -1,6 +1,7 @@
 import * as Tone from 'tone';
 import { Chord as TonalChord } from 'tonal';
 import type { CompiledSequence } from './useAudioEngine';
+import type { MixerState } from './types/music';
 import {
   GUITAR_SYNTH_OPTIONS,
   FLUTE_SYNTH_OPTIONS,
@@ -11,7 +12,12 @@ import {
 } from './synthProfiles';
 import { parseNoteStep } from './musicUtils';
 
-export async function renderSequenceToWav(sequence: CompiledSequence, bpm: number, volume: number = 80): Promise<Blob> {
+export async function renderSequenceToWav(
+  sequence: CompiledSequence,
+  bpm: number,
+  volume: number = 80,
+  mixerState?: MixerState
+): Promise<Blob> {
   // 1 step = 1 8th note
   const stepSecs = (60 / bpm) / 2;
   let maxTime = 0;
@@ -46,7 +52,8 @@ export async function renderSequenceToWav(sequence: CompiledSequence, bpm: numbe
       Drums: new Tone.PolySynth(Tone.MembraneSynth).connect(limiter),
     };
 
-    const hasAnySolo = sequence.scheduledNodes.some(n => n.data?.isSoloed);
+    const hasAnyNodeSolo = sequence.scheduledNodes.some(n => n.data?.isSoloed);
+    const hasAnyMixerSolo = mixerState ? Object.values(mixerState).some(ch => ch.isSoloed) : false;
 
     for (const snode of sequence.scheduledNodes) {
       const notesInNode = (snode.data?.sequence || '').split('\n').filter((n: string) => n.trim() !== '');
@@ -54,11 +61,17 @@ export async function renderSequenceToWav(sequence: CompiledSequence, bpm: numbe
 
       if (notesInNode.length === 0) continue;
 
+      // Honor Mixer Strip settings
+      const instMixer = mixerState?.[snode.instrument];
+      if (hasAnyMixerSolo && !instMixer?.isSoloed) continue;
+      if (instMixer?.isMuted) continue;
+
       const isSoloed = !!snode.data?.isSoloed;
       const isMuted = !!snode.data?.isMuted;
-      const shouldPlaySound = hasAnySolo ? isSoloed : !isMuted;
+      const shouldPlaySound = hasAnyNodeSolo ? isSoloed : !isMuted;
+      const mixerVolMultiplier = instMixer ? instMixer.volume / 100 : 1;
       const nodeVol = snode.data?.volume !== undefined ? Math.max(0, Math.min(100, snode.data.volume)) : 100;
-      const velocity = nodeVol / 100;
+      const velocity = (nodeVol / 100) * mixerVolMultiplier;
 
       if (!shouldPlaySound || velocity === 0) continue;
 
@@ -71,30 +84,37 @@ export async function renderSequenceToWav(sequence: CompiledSequence, bpm: numbe
 
       const activeSynth = synths[snode.instrument] || synths['Piano'];
 
-      if (mainChord) {
-        const chordData = TonalChord.get(mainChord);
-        if (!chordData.empty) {
-          const chordNotes = chordData.notes.map(n => shiftNote(`${n}3`));
-          activeSynth.triggerAttackRelease(chordNotes, nodeDurationSecs, startSecs, velocity * 0.7);
-        }
-      }
+      const repeat = Math.max(1, Math.min(32, Math.floor(Number(snode.data?.repeat) || 1)));
+      const singlePassDurationSecs = nodeDurationSecs / repeat;
 
-      let noteOffset = 0;
-      for (const rawNote of notesInNode) {
-        const step = parseNoteStep(rawNote);
-        if (!step) continue;
-        const stepDurationSecs = step.stepUnits * stepSecs;
+      for (let rep = 0; rep < repeat; rep++) {
+        const iterStartSecs = startSecs + rep * singlePassDurationSecs;
 
-        if (!step.isRest && step.pitches.length > 0) {
-          const shifted = step.pitches.map(shiftNote);
-          activeSynth.triggerAttackRelease(
-            shifted.length === 1 ? shifted[0] : shifted,
-            step.durationNotation,
-            startSecs + noteOffset,
-            velocity
-          );
+        if (mainChord) {
+          const chordData = TonalChord.get(mainChord);
+          if (!chordData.empty) {
+            const chordNotes = chordData.notes.map(n => shiftNote(`${n}3`));
+            activeSynth.triggerAttackRelease(chordNotes, singlePassDurationSecs, iterStartSecs, velocity * 0.7);
+          }
         }
-        noteOffset += stepDurationSecs;
+
+        let noteOffset = 0;
+        for (const rawNote of notesInNode) {
+          const step = parseNoteStep(rawNote);
+          if (!step) continue;
+          const stepDurationSecs = step.stepUnits * stepSecs;
+
+          if (!step.isRest && step.pitches.length > 0) {
+            const shifted = step.pitches.map(shiftNote);
+            activeSynth.triggerAttackRelease(
+              shifted.length === 1 ? shifted[0] : shifted,
+              step.durationNotation,
+              iterStartSecs + noteOffset,
+              velocity
+            );
+          }
+          noteOffset += stepDurationSecs;
+        }
       }
     }
 

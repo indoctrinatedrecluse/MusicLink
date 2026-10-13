@@ -69,9 +69,29 @@ export interface MusicNodeData {
   instrument?: Instrument;
   octave?: number;
   volume?: number;    // 0 to 100, default 100
+  repeat?: number;    // 1 to 32, default 1
   isMuted?: boolean;  // Mute audio output
   isSoloed?: boolean; // Solo audio output
 }
+
+export interface InstrumentMixerChannel {
+  volume: number; // 0 to 100
+  isMuted: boolean;
+  isSoloed: boolean;
+}
+
+export type MixerState = Record<Instrument, InstrumentMixerChannel>;
+
+export const DEFAULT_MIXER_STATE: MixerState = {
+  Piano: { volume: 80, isMuted: false, isSoloed: false },
+  Guitar: { volume: 80, isMuted: false, isSoloed: false },
+  Flute: { volume: 80, isMuted: false, isSoloed: false },
+  Bass: { volume: 85, isMuted: false, isSoloed: false },
+  Strings: { volume: 80, isMuted: false, isSoloed: false },
+  Brass: { volume: 80, isMuted: false, isSoloed: false },
+  '8-Bit': { volume: 75, isMuted: false, isSoloed: false },
+  Drums: { volume: 85, isMuted: false, isSoloed: false },
+};
 
 // The TypeScript equivalent of an "interface" or "struct" in C
 export interface MusicSequenceLink {
@@ -83,3 +103,4 @@ export interface MusicSequenceLink {
   // For now, we can assume it returns the duration in seconds.
   calculateDuration: () => number;
 }
+

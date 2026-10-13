@@ -5,6 +5,7 @@
  * with all modern DAWs (Logic, Ableton, FL Studio, GarageBand, Reaper, etc.).
  */
 import type { CompiledSequence, ScheduledNode } from './useAudioEngine';
+import type { MixerState } from './types/music';
 import { parseNoteStep } from './musicUtils';
 import { Chord as TonalChord } from 'tonal';
 
@@ -111,9 +112,14 @@ function buildTrackChunk(events: RawMidiEvent[]): number[] {
  *
  * @param sequence The compiled node sequence to export
  * @param bpm Project tempo
+ * @param mixerState Optional per-instrument mixer settings (volume, mute, solo)
  * @returns Blob of MIME type `audio/midi` ready for download
  */
-export function exportSequenceToMidi(sequence: CompiledSequence, bpm: number): Blob {
+export function exportSequenceToMidi(
+  sequence: CompiledSequence,
+  bpm: number,
+  mixerState?: MixerState
+): Blob {
   const trackChunks: number[][] = [];
 
   // ── Track 0: Master Conductor / Tempo Track ──────────────────────────────
@@ -144,7 +150,8 @@ export function exportSequenceToMidi(sequence: CompiledSequence, bpm: number): B
   trackChunks.push(buildTrackChunk(conductorEvents));
 
   // ── Channel Strip Filtering (Solo & Mute) ────────────────────────────────
-  const hasAnySolo = sequence.scheduledNodes.some(n => n.data?.isSoloed);
+  const hasAnyNodeSolo = sequence.scheduledNodes.some(n => n.data?.isSoloed);
+  const hasAnyMixerSolo = mixerState ? Object.values(mixerState).some(ch => ch.isSoloed) : false;
 
   // Group nodes by individual track or compile each active node
   sequence.scheduledNodes.forEach((snode: ScheduledNode, idx: number) => {
@@ -155,17 +162,25 @@ export function exportSequenceToMidi(sequence: CompiledSequence, bpm: number): B
       octave?: number;
       label?: string;
       volume?: number;
+      repeat?: number;
       isMuted?: boolean;
       isSoloed?: boolean;
     };
 
-    // Honor Solo & Mute states
-    if (hasAnySolo && !data?.isSoloed) return;
+    // Honor Mixer Strip settings
+    const instMixer = mixerState?.[snode.instrument];
+    if (hasAnyMixerSolo && !instMixer?.isSoloed) return;
+    if (instMixer?.isMuted) return;
+
+    // Honor Node Solo & Mute states
+    if (hasAnyNodeSolo && !data?.isSoloed) return;
     if (data?.isMuted) return;
 
     const instConfig = INSTRUMENT_MAP[snode.instrument] || INSTRUMENT_MAP.Piano;
     const channel = instConfig.channel;
-    const velocity = Math.max(1, Math.min(127, Math.round(((data.volume ?? 80) / 100) * 127)));
+    const mixerVolMultiplier = instMixer ? instMixer.volume / 100 : 1;
+    const baseVol = data.volume ?? 80;
+    const velocity = Math.max(1, Math.min(127, Math.round(((baseVol / 100) * mixerVolMultiplier) * 127)));
 
     const nodeEvents: RawMidiEvent[] = [];
     const trackName = data.label ? `${data.label} (${snode.instrument})` : `${snode.instrument} ${idx + 1}`;
@@ -197,67 +212,74 @@ export function exportSequenceToMidi(sequence: CompiledSequence, bpm: number): B
     const nodeStartTick = Math.round(snode.startTime * TICKS_PER_STEP);
     const nodeDurationTicks = Math.round(snode.duration * TICKS_PER_STEP);
 
-    // Add main chord if configured
-    if (data.chord) {
-      const chordData = TonalChord.get(data.chord);
-      if (!chordData.empty) {
-        const chordVelocity = Math.max(1, Math.round(velocity * 0.7));
-        for (const n of chordData.notes) {
-          const shifted = shiftNote(`${n}3`);
-          const midi = noteNameToMidi(shifted);
-          if (midi !== null) {
-            // Note On
-            nodeEvents.push({
-              tick: nodeStartTick,
-              priority: 2,
-              bytes: [0x90 | (channel & 0x0f), midi, chordVelocity],
-            });
-            // Note Off
-            nodeEvents.push({
-              tick: nodeStartTick + nodeDurationTicks,
-              priority: 1,
-              bytes: [0x80 | (channel & 0x0f), midi, 0],
-            });
-          }
-        }
-      }
-    }
+    const repeat = Math.max(1, Math.min(32, Math.floor(Number(data.repeat) || 1)));
+    const singlePassDurationTicks = Math.round(nodeDurationTicks / repeat);
 
-    // Add sequential melody/step notes
     const rawLines = (data.sequence ?? '')
       .split('\n')
       .map(l => l.trim())
       .filter(Boolean);
 
-    let noteOffsetTicks = 0;
-    for (const rawNote of rawLines) {
-      const step = parseNoteStep(rawNote);
-      if (!step) continue;
+    for (let rep = 0; rep < repeat; rep++) {
+      const iterStartTick = nodeStartTick + rep * singlePassDurationTicks;
 
-      const stepDurationTicks = Math.round(step.stepUnits * TICKS_PER_STEP);
-
-      if (!step.isRest && step.pitches.length > 0) {
-        for (const pitch of step.pitches) {
-          const shifted = shiftNote(pitch);
-          const midi = noteNameToMidi(shifted);
-          if (midi !== null) {
-            // Note On
-            nodeEvents.push({
-              tick: nodeStartTick + noteOffsetTicks,
-              priority: 2,
-              bytes: [0x90 | (channel & 0x0f), midi, velocity],
-            });
-            // Note Off
-            nodeEvents.push({
-              tick: nodeStartTick + noteOffsetTicks + stepDurationTicks,
-              priority: 1,
-              bytes: [0x80 | (channel & 0x0f), midi, 0],
-            });
+      // Add main chord if configured
+      if (data.chord) {
+        const chordData = TonalChord.get(data.chord);
+        if (!chordData.empty) {
+          const chordVelocity = Math.max(1, Math.round(velocity * 0.7));
+          for (const n of chordData.notes) {
+            const shifted = shiftNote(`${n}3`);
+            const midi = noteNameToMidi(shifted);
+            if (midi !== null) {
+              // Note On
+              nodeEvents.push({
+                tick: iterStartTick,
+                priority: 2,
+                bytes: [0x90 | (channel & 0x0f), midi, chordVelocity],
+              });
+              // Note Off
+              nodeEvents.push({
+                tick: iterStartTick + singlePassDurationTicks,
+                priority: 1,
+                bytes: [0x80 | (channel & 0x0f), midi, 0],
+              });
+            }
           }
         }
       }
 
-      noteOffsetTicks += stepDurationTicks;
+      // Add sequential melody/step notes
+      let noteOffsetTicks = 0;
+      for (const rawNote of rawLines) {
+        const step = parseNoteStep(rawNote);
+        if (!step) continue;
+
+        const stepDurationTicks = Math.round(step.stepUnits * TICKS_PER_STEP);
+
+        if (!step.isRest && step.pitches.length > 0) {
+          for (const pitch of step.pitches) {
+            const shifted = shiftNote(pitch);
+            const midi = noteNameToMidi(shifted);
+            if (midi !== null) {
+              // Note On
+              nodeEvents.push({
+                tick: iterStartTick + noteOffsetTicks,
+                priority: 2,
+                bytes: [0x90 | (channel & 0x0f), midi, velocity],
+              });
+              // Note Off
+              nodeEvents.push({
+                tick: iterStartTick + noteOffsetTicks + stepDurationTicks,
+                priority: 1,
+                bytes: [0x80 | (channel & 0x0f), midi, 0],
+              });
+            }
+          }
+        }
+
+        noteOffsetTicks += stepDurationTicks;
+      }
     }
 
     trackChunks.push(buildTrackChunk(nodeEvents));

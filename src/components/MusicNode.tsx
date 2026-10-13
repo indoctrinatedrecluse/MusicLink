@@ -11,16 +11,28 @@ const INSTRUMENT_ICONS: Record<string, string> = Object.fromEntries(
   INSTRUMENT_OPTIONS.map(opt => [opt.value, opt.icon])
 );
 
+export const INSTRUMENT_THEMES: Record<string, { primary: string; bgLight: string; borderHover: string; badgeBg: string; badgeText: string }> = {
+  Piano:   { primary: '#10b981', bgLight: '#f0fdf4', borderHover: '#059669', badgeBg: '#dcfce7', badgeText: '#166534' },
+  Guitar:  { primary: '#f59e0b', bgLight: '#fffbeb', borderHover: '#d97706', badgeBg: '#fef3c7', badgeText: '#92400e' },
+  Flute:   { primary: '#06b6d4', bgLight: '#ecfeff', borderHover: '#0891b2', badgeBg: '#cffafe', badgeText: '#155e75' },
+  Bass:    { primary: '#8b5cf6', bgLight: '#f5f3ff', borderHover: '#7c3aed', badgeBg: '#ede9fe', badgeText: '#5b21b6' },
+  Strings: { primary: '#f43f5e', bgLight: '#fff1f2', borderHover: '#e11d48', badgeBg: '#ffe4e6', badgeText: '#9f1239' },
+  Brass:   { primary: '#f97316', bgLight: '#fff7ed', borderHover: '#ea580c', badgeBg: '#ffedd5', badgeText: '#9a3412' },
+  '8-Bit': { primary: '#0ea5e9', bgLight: '#f0f9ff', borderHover: '#0284c7', badgeBg: '#e0f2fe', badgeText: '#075985' },
+  Drums:   { primary: '#64748b', bgLight: '#f8fafc', borderHover: '#475569', badgeBg: '#e2e8f0', badgeText: '#334155' },
+};
+
 const nodeStyle = {
   background: '#fff',
   border: '2px solid #333',
   borderRadius: '8px',
   padding: '10px 15px',
-  minWidth: '170px',
+  minWidth: '180px',
   boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
   fontFamily: 'sans-serif',
   fontSize: '12px',
   position: 'relative' as const,
+  transition: 'border-color 0.2s, box-shadow 0.2s',
 };
 
 const textareaStyle = {
@@ -45,9 +57,9 @@ const selectStyle = {
 const labelStyle = {
   display: 'block',
   fontWeight: 'bold' as const,
-  fontSize: '14px',
+  fontSize: '13px',
   color: '#333',
-  marginTop: '8px',
+  marginTop: '6px',
 };
 
 export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
@@ -91,21 +103,25 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
   );
 
   const activeInstrument = localData.instrument || 'Piano';
+  const theme = INSTRUMENT_THEMES[activeInstrument] || INSTRUMENT_THEMES.Piano;
+  const repeatCount = Math.max(1, Math.min(32, Math.floor(Number(localData.repeat) || 1)));
 
   return (
-    <div style={nodeStyle}>
-      <NodeResizer minWidth={170} minHeight={150} />
-      <Handle type="target" position={Position.Top} style={{ background: '#555' }} />
+    <div style={{ ...nodeStyle, borderColor: theme.primary, boxShadow: `0 4px 14px ${theme.primary}22` }}>
+      <NodeResizer minWidth={180} minHeight={150} />
+      <Handle type="target" position={Position.Top} style={{ background: theme.primary, width: 10, height: 10 }} />
 
-      {/* Node Title / Label */}
+      {/* Node Title / Label with instrument-themed header */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
-          paddingBottom: '6px',
-          marginBottom: '6px',
-          borderBottom: '1px solid #e0e0e0',
+          padding: '4px 6px',
+          margin: '-6px -11px 6px -11px',
+          background: theme.bgLight,
+          borderRadius: '6px 6px 0 0',
+          borderBottom: `1px solid ${theme.primary}33`,
         }}
       >
         <span style={{ fontSize: '15px' }} title={activeInstrument}>{INSTRUMENT_ICONS[activeInstrument] || '🎵'}</span>
@@ -122,13 +138,28 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
             padding: '2px 4px',
             fontSize: '12px',
             fontWeight: 'bold',
-            color: '#1976d2',
+            color: theme.badgeText,
             background: 'transparent',
             outline: 'none',
             boxSizing: 'border-box',
           }}
           title="Click to rename this node"
         />
+        {repeatCount > 1 && (
+          <span
+            style={{
+              background: theme.badgeBg,
+              color: theme.badgeText,
+              padding: '2px 5px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+            }}
+            title={`Repeats ${repeatCount} times consecutively`}
+          >
+            🔁 {repeatCount}x
+          </span>
+        )}
       </div>
       
       <div 
@@ -147,13 +178,13 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
           className="node-progress-bar"
           style={{
             height: '100%',
-            background: '#4CAF50',
+            background: theme.primary,
             width: '0%',
           }}
         />
       </div>
 
-      <div style={{ display: 'flex', gap: '10px' }}>
+      <div style={{ display: 'flex', gap: '8px' }}>
         <div style={{ flex: 1 }}>
           <label htmlFor={`instrument-${id}`} style={labelStyle}>Instrument</label>
           <select
@@ -170,8 +201,8 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
             ))}
           </select>
         </div>
-        <div style={{ width: '60px' }}>
-          <label htmlFor={`octave-${id}`} style={labelStyle}>Octave</label>
+        <div style={{ width: '50px' }}>
+          <label htmlFor={`octave-${id}`} style={labelStyle}>Oct</label>
           <select
             id={`octave-${id}`}
             name="octave"
@@ -184,6 +215,26 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
             <option value="0">0</option>
             <option value="1">+1</option>
             <option value="2">+2</option>
+          </select>
+        </div>
+        <div style={{ width: '55px' }}>
+          <label htmlFor={`repeat-${id}`} style={labelStyle}>Loop</label>
+          <select
+            id={`repeat-${id}`}
+            name="repeat"
+            value={localData.repeat ?? 1}
+            onChange={onChange}
+            style={selectStyle}
+            title="Loop this node N times consecutively"
+          >
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="3">3x</option>
+            <option value="4">4x</option>
+            <option value="6">6x</option>
+            <option value="8">8x</option>
+            <option value="12">12x</option>
+            <option value="16">16x</option>
           </select>
         </div>
       </div>
@@ -324,7 +375,7 @@ export function MusicNode({ id, data }: NodeProps<MusicNodeData>) {
         />
       </div>
 
-      <Handle type="source" position={Position.Bottom} style={{ background: '#555' }} />
+      <Handle type="source" position={Position.Bottom} style={{ background: theme.primary, width: 10, height: 10 }} />
     </div>
   );
 }

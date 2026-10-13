@@ -1,0 +1,59 @@
+{
+  "nodes": [
+    { "id": "start-1", "type": "startNode", "data": {}, "position": { "x": 650, "y": 20 } },
+
+    { "id": "b-intro", "type": "musicNode", "data": { "label": "Bass: Low Rumble", "sequence": "A1:2n\nA1:2n\nF1:2n\nG1:2n", "chord": "Am", "instrument": "Bass", "octave": 0, "volume": 85 }, "position": { "x": 100, "y": 160 } },
+    { "id": "b-verse", "type": "musicNode", "data": { "label": "Bass: 16th Pulse", "sequence": "A1:8n\nA2:8n\nA1:8n\nA2:8n\nF1:8n\nF2:8n\nG1:8n\nG2:8n", "chord": "Am", "instrument": "Bass", "octave": 0, "volume": 90, "repeat": 2 }, "position": { "x": 100, "y": 360 } },
+    { "id": "b-chorus", "type": "musicNode", "data": { "label": "Bass: Grand Drop", "sequence": "F1:4n\nF2:8n\nF1:8n\nG1:4n\nG2:8n\nG1:8n\nA1:4n\nA2:8n\nA1:8n\nE1:4n\nE2:8n\nE1:8n", "chord": "F", "instrument": "Bass", "octave": 0, "volume": 95 }, "position": { "x": 100, "y": 560 } },
+    { "id": "b-outro", "type": "musicNode", "data": { "label": "Bass: Outro Decay", "sequence": "A1:4n\nA1:4n\nA1:2n\nA1:1n", "chord": "Am", "instrument": "Bass", "octave": 0, "volume": 85 }, "position": { "x": 100, "y": 760 } },
+
+    { "id": "d-intro", "type": "musicNode", "data": { "label": "Drums: Hi-Hat Intro", "sequence": "F#2:8n\nF#2:8n\nF#2:8n\nF#2:8n\nF#2:8n\nF#2:8n\nF#2:8n\nF#2:8n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 75, "repeat": 2 }, "position": { "x": 450, "y": 160 } },
+    { "id": "d-verse", "type": "musicNode", "data": { "label": "Drums: 4-on-Floor", "sequence": "C2:4n\nD2:4n\nC2:4n\nD2:4n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 85, "repeat": 2 }, "position": { "x": 450, "y": 360 } },
+    { "id": "d-chorus", "type": "musicNode", "data": { "label": "Drums: Heavy Driving", "sequence": "C2:8n\nC2:8n\nD2:4n\nC2:8n\nC2:8n\nD2:4n\nC2:8n\nC2:8n\nD2:4n\nC2:8n\nC2:8n\nD2:4n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 90 }, "position": { "x": 450, "y": 560 } },
+    { "id": "d-outro", "type": "musicNode", "data": { "label": "Drums: Half-Time Fill", "sequence": "C2:2n\nD2:4n\nC#2:4n\nC2:1n", "chord": "", "instrument": "Drums", "octave": 0, "volume": 85 }, "position": { "x": 450, "y": 760 } },
+
+    { "id": "lead-intro", "type": "musicNode", "data": { "label": "8-Bit: Arp Pattern", "sequence": "E4:8n\nA4:8n\nC5:8n\nE5:8n\nD4:8n\nG4:8n\nB4:8n\nD5:8n", "chord": "Am", "instrument": "8-Bit", "octave": 0, "volume": 80, "repeat": 2 }, "position": { "x": 800, "y": 160 } },
+    { "id": "lead-verse", "type": "musicNode", "data": { "label": "8-Bit: Cyber Melody", "sequence": "E5:4n\nC5:8n\nD5:8n\nE5:2n\nG5:4n\nF5:8n\nE5:8n\nD5:2n", "chord": "Am", "instrument": "8-Bit", "octave": 0, "volume": 85 }, "position": { "x": 800, "y": 360 } },
+    { "id": "solo-a", "type": "musicNode", "data": { "label": "8-Bit Solo: Shred Run", "sequence": "E5:16n\nF5:16n\nE5:16n\nD5:16n\nC5:16n\nB4:16n\nA4:16n\nB4:16n\nC5:16n\nD5:16n\nE5:16n\nG5:16n\nA5:4n\nE5:4n", "chord": "Am", "instrument": "8-Bit", "octave": 0, "volume": 90 }, "position": { "x": 730, "y": 560 } },
+    { "id": "solo-b", "type": "musicNode", "data": { "label": "8-Bit Solo: High Screamer", "sequence": "A5:2n\nG5:4n\nE5:4n\nF5:4n\nE5:4n\nD5:2n", "chord": "F", "instrument": "8-Bit", "octave": 0, "volume": 90 }, "position": { "x": 920, "y": 560 } },
+    { "id": "lead-outro", "type": "musicNode", "data": { "label": "8-Bit: Theme Return", "sequence": "E5:4n\nC5:4n\nA4:2n\nA4:1n", "chord": "Am", "instrument": "8-Bit", "octave": 0, "volume": 85 }, "position": { "x": 800, "y": 760 } },
+
+    { "id": "br-intro", "type": "musicNode", "data": { "label": "Brass: Low Ambient", "sequence": "A3:1n\nF3:1n", "chord": "Am", "instrument": "Brass", "octave": 0, "volume": 70 }, "position": { "x": 1180, "y": 160 } },
+    { "id": "br-verse", "type": "musicNode", "data": { "label": "Brass: Syncopated Stabs", "sequence": "R:4n\nA3,C4,E4:8n\nR:8n\nR:4n\nF3,A3,C4:8n\nR:8n\nR:4n\nG3,B3,D4:8n\nR:8n\nR:4n\nE3,G3,B3:8n\nR:8n", "chord": "Am", "instrument": "Brass", "octave": 0, "volume": 85 }, "position": { "x": 1180, "y": 360 } },
+    { "id": "br-chorus", "type": "musicNode", "data": { "label": "Brass: Epic Fanfare", "sequence": "F3,A3,C4:2n\nG3,B3,D4:2n\nA3,C4,E4:2n\nE3,G#3,B3:2n", "chord": "F", "instrument": "Brass", "octave": 0, "volume": 90 }, "position": { "x": 1180, "y": 560 } },
+    { "id": "br-outro", "type": "musicNode", "data": { "label": "Brass: Final Unison", "sequence": "A3,C4,E4:1n\nA2,E3,A3:1n", "chord": "Am", "instrument": "Brass", "octave": 0, "volume": 85 }, "position": { "x": 1180, "y": 760 } },
+
+    { "id": "end-1", "type": "endNode", "data": {}, "position": { "x": 650, "y": 960 } }
+  ],
+  "edges": [
+    { "id": "e-start-b", "source": "start-1", "target": "b-intro" },
+    { "id": "e-start-d", "source": "start-1", "target": "d-intro" },
+    { "id": "e-start-l", "source": "start-1", "target": "lead-intro" },
+    { "id": "e-start-br", "source": "start-1", "target": "br-intro" },
+
+    { "id": "e-b1-b2", "source": "b-intro", "target": "b-verse" },
+    { "id": "e-b2-b3", "source": "b-verse", "target": "b-chorus" },
+    { "id": "e-b3-b4", "source": "b-chorus", "target": "b-outro" },
+    { "id": "e-b4-end", "source": "b-outro", "target": "end-1" },
+
+    { "id": "e-d1-d2", "source": "d-intro", "target": "d-verse" },
+    { "id": "e-d2-d3", "source": "d-verse", "target": "d-chorus" },
+    { "id": "e-d3-d4", "source": "d-chorus", "target": "d-outro" },
+    { "id": "e-d4-end", "source": "d-outro", "target": "end-1" },
+
+    { "id": "e-l1-l2", "source": "lead-intro", "target": "lead-verse" },
+    { "id": "e-l2-sa", "source": "lead-verse", "target": "solo-a", "data": { "probability": 0.5 }, "label": "🎲 50%" },
+    { "id": "e-l2-sb", "source": "lead-verse", "target": "solo-b", "data": { "probability": 0.5 }, "label": "🎲 50%" },
+    { "id": "e-sa-l3", "source": "solo-a", "target": "lead-outro" },
+    { "id": "e-sb-l3", "source": "solo-b", "target": "lead-outro" },
+    { "id": "e-l3-end", "source": "lead-outro", "target": "end-1" },
+
+    { "id": "e-br1-br2", "source": "br-intro", "target": "br-verse" },
+    { "id": "e-br2-br3", "source": "br-verse", "target": "br-chorus" },
+    { "id": "e-br3-br4", "source": "br-chorus", "target": "br-outro" },
+    { "id": "e-br4-end", "source": "br-outro", "target": "end-1" }
+  ],
+  "bpm": 126,
+  "volume": 85,
+  "isLooping": true
+}

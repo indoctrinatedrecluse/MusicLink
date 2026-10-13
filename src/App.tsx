@@ -24,10 +24,11 @@ import { Toolbar } from './components/Toolbar';
 import { NodeContextMenu } from './components/NodeContextMenu';
 import { Toast, type ToastItem, type ToastType } from './components/Toast';
 import { compileGraph } from './compiler';
-import type { Instrument, MusicNodeData } from './types/music';
 import { GenerateTrackModal } from './components/GenerateTrackModal';
 import { generateRandomTrack, type GenerateTrackOptions } from './trackGenerator';
+import { MixerDrawer } from './components/MixerDrawer';
 import { getSnapshot, loadSavedState, STORAGE_KEY, type AppNodeData } from './flowUtils';
+import { type Instrument, type MusicNodeData, type MixerState, DEFAULT_MIXER_STATE } from './types/music';
 import './App.css';
 
 const initialState = loadSavedState();
@@ -35,7 +36,7 @@ const initialState = loadSavedState();
 function getStructuralSignature(nodes: Node<AppNodeData>[], edges: Edge[]): string {
   const nodeParts = nodes.map(n => {
     const data = n.data as Partial<MusicNodeData> | undefined;
-    return `${n.id}:${n.type}:${data?.sequence ?? ''}:${data?.chord ?? ''}:${data?.octave ?? 0}:${data?.instrument ?? ''}:${data?.volume ?? 100}:${data?.isMuted ?? false}:${data?.isSoloed ?? false}`;
+    return `${n.id}:${n.type}:${data?.sequence ?? ''}:${data?.chord ?? ''}:${data?.octave ?? 0}:${data?.instrument ?? ''}:${data?.volume ?? 100}:${data?.repeat ?? 1}:${data?.isMuted ?? false}:${data?.isSoloed ?? false}`;
   }).join('|');
   const edgeParts = edges.map(e =>
     `${e.id}:${e.source}->${e.target}:${e.data?.disabled ?? false}:${e.data?.probability ?? 1}`
@@ -59,12 +60,15 @@ function App() {
   const [volume, setVolume] = useState(initialState.volume);
   const [isLooping, setIsLooping] = useState(initialState.isLooping);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
+  const [mixerState, setMixerState] = useState<MixerState>(DEFAULT_MIXER_STATE);
+  const [isMixerOpen, setIsMixerOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ id: string, top: number, left: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const clipboardRef = useRef<{ nodes: Node<AppNodeData>[]; edges: Edge[] } | null>(null);
   const [playheadState, setPlayheadState] = useState({ active: false, duration: 0 });
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
   
-  const { isLoaded, isPlaying, playSequence, stop } = useAudioEngine(volume);
+  const { isLoaded, isPlaying, currentTime, totalDurationSecs, seek, playSequence, stop } = useAudioEngine(volume, mixerState);
 
   const historyRef = useRef<string[]>(initialState.history);
   const historyIndexRef = useRef<number>(initialState.historyIndex);
@@ -198,10 +202,8 @@ function App() {
     setContextMenu(null);
   }, [contextMenu, nodes, bpm, playSequence, handleNodePlay, handlePlayStateChange]);
 
-  const duplicateSelection = useCallback(() => {
-    if (!contextMenu) return;
-    const selectedNodes = nodes.filter((n) => n.selected);
-    const nodesToCopy = selectedNodes.length > 0 ? selectedNodes : nodes.filter((n) => n.id === contextMenu.id);
+  const duplicateNodesAndEdges = useCallback((nodesToCopy: Node<AppNodeData>[], offset = 50) => {
+    if (nodesToCopy.length === 0) return;
 
     const idMap = new Map<string, string>();
     const newNodes: Node<AppNodeData>[] = [];
@@ -217,13 +219,13 @@ function App() {
       newNodes.push({
         ...nodeToCopy,
         id: newId,
-        position: { x: nodeToCopy.position.x + 40, y: nodeToCopy.position.y + 40 },
+        position: { x: nodeToCopy.position.x + offset, y: nodeToCopy.position.y + offset },
         data: { ...nodeToCopy.data },
-        selected: true, // Make the new clones selected so the user can easily drag them!
+        selected: true, // Make the new clones selected so the user can easily drag them
       });
     });
 
-    // Duplicate the internal edges between the selected nodes
+    // Duplicate the internal edges between the copied nodes
     const newEdges: Edge[] = [];
     edges.forEach((edge) => {
       if (idMap.has(edge.source) && idMap.has(edge.target)) {
@@ -240,7 +242,31 @@ function App() {
     setNodes((nds) => [...nds.map((n) => ({ ...n, selected: false })), ...newNodes]);
     setEdges((eds) => eds.concat(newEdges));
     setContextMenu(null);
-  }, [contextMenu, nodes, edges, setNodes, setEdges]);
+    showToast(`Duplicated ${nodesToCopy.length} node${nodesToCopy.length > 1 ? 's' : ''}`, 'info');
+  }, [edges, setNodes, setEdges, showToast]);
+
+  const duplicateSelection = useCallback(() => {
+    const selectedNodes = nodes.filter((n) => n.selected);
+    const nodesToCopy = selectedNodes.length > 0 ? selectedNodes : (contextMenu ? nodes.filter((n) => n.id === contextMenu.id) : []);
+    duplicateNodesAndEdges(nodesToCopy, 40);
+  }, [contextMenu, nodes, duplicateNodesAndEdges]);
+
+  const copySelection = useCallback(() => {
+    const selectedNodes = nodes.filter(n => n.selected);
+    if (selectedNodes.length === 0) return;
+    const selectedIds = new Set(selectedNodes.map(n => n.id));
+    const internalEdges = edges.filter(e => selectedIds.has(e.source) && selectedIds.has(e.target));
+    clipboardRef.current = { nodes: selectedNodes, edges: internalEdges };
+    showToast(`Copied ${selectedNodes.length} node${selectedNodes.length > 1 ? 's' : ''} to clipboard`, 'info');
+  }, [nodes, edges, showToast]);
+
+  const pasteSelection = useCallback(() => {
+    if (!clipboardRef.current || clipboardRef.current.nodes.length === 0) {
+      showToast('Clipboard is empty', 'warning');
+      return;
+    }
+    duplicateNodesAndEdges(clipboardRef.current.nodes, 60);
+  }, [duplicateNodesAndEdges, showToast]);
 
   const deleteSelectionAndBridge = useCallback(() => {
     if (!contextMenu) return;
@@ -484,7 +510,7 @@ function App() {
     setIsAddModalOpen(true);
   }, []);
 
-  const handleSaveNewNode = useCallback((data: { label?: string; sequence: string; chord: string; instrument: Instrument; octave: number }) => {
+  const handleSaveNewNode = useCallback((data: { label?: string; sequence: string; chord: string; instrument: Instrument; octave: number; repeat?: number }) => {
     const id = `${nodeIdCounter.current++}`;
     const x = Math.round((100 + Math.random() * 400) / 20) * 20;
     const y = Math.round((100 + Math.random() * 200) / 20) * 20;
@@ -593,7 +619,7 @@ function App() {
 
     try {
       const { renderSequenceToWav } = await import('./audioExporter');
-      const wavBlob = await renderSequenceToWav(compiledSequence, bpm, volume);
+      const wavBlob = await renderSequenceToWav(compiledSequence, bpm, volume, mixerState);
       const url = URL.createObjectURL(wavBlob);
       const a = document.createElement('a');
       a.href = url;
@@ -609,7 +635,7 @@ function App() {
     } finally {
       setIsExportingAudio(false);
     }
-  }, [compiledSequence, bpm, volume, showToast]);
+  }, [compiledSequence, bpm, volume, mixerState, showToast]);
 
   const handleExportMidi = useCallback(async () => {
     if (!compiledSequence) {
@@ -619,7 +645,7 @@ function App() {
 
     try {
       const { exportSequenceToMidi } = await import('./midiExporter');
-      const midiBlob = exportSequenceToMidi(compiledSequence, bpm);
+      const midiBlob = exportSequenceToMidi(compiledSequence, bpm, mixerState);
       const url = URL.createObjectURL(midiBlob);
       const a = document.createElement('a');
       a.href = url;
@@ -633,7 +659,7 @@ function App() {
       console.error("MIDI export failed:", err);
       showToast("Failed to export MIDI. Check console for details.", "error");
     }
-  }, [compiledSequence, bpm, showToast]);
+  }, [compiledSequence, bpm, mixerState, showToast]);
 
   const importSequence = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -791,7 +817,7 @@ function App() {
     playSequence(seq, bpm, isLooping, handleNodePlay, handlePlayStateChange);
   }, [isPlaying, stop, compiledSequence, nodes, edges, rfInstance, playSequence, bpm, isLooping, handleNodePlay, handlePlayStateChange, showToast]);
 
-  // Spacebar shortcut to toggle Play / Stop
+  // Global keyboard shortcuts: Space (Play/Stop), Ctrl+D (Duplicate), Ctrl+C (Copy), Ctrl+V (Paste)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
@@ -801,11 +827,21 @@ function App() {
       if (e.code === 'Space') {
         e.preventDefault();
         handlePlay();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
+        e.preventDefault();
+        const selected = nodes.filter(n => n.selected);
+        if (selected.length > 0) {
+          duplicateNodesAndEdges(selected);
+        }
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C')) {
+        copySelection();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
+        pasteSelection();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handlePlay]);
+  }, [handlePlay, nodes, duplicateNodesAndEdges, copySelection, pasteSelection]);
 
   const displayNodes = useMemo(() => {
     if (errorNodeIds.length === 0) return nodes;
@@ -820,6 +856,10 @@ function App() {
       return n;
     });
   }, [nodes, errorNodeIds]);
+
+  const hasMixerModifications = useMemo(() => {
+    return Object.values(mixerState).some(ch => ch.volume !== 80 || ch.isMuted || ch.isSoloed);
+  }, [mixerState]);
 
   return (
     <div className="app-container">
@@ -944,6 +984,11 @@ function App() {
         compiledSequence={compiledSequence}
         isPlaying={isPlaying}
         isLoaded={isLoaded}
+        currentTime={currentTime}
+        totalDurationSecs={totalDurationSecs}
+        onSeek={seek}
+        onOpenMixer={() => setIsMixerOpen(true)}
+        hasMixerModifications={hasMixerModifications}
         onPlay={handlePlay}
         onStop={stop}
       />
@@ -964,6 +1009,14 @@ function App() {
         isOpen={isGenerateModalOpen}
         onClose={() => setIsGenerateModalOpen(false)}
         onGenerate={handleGenerateTrack}
+      />
+
+      <MixerDrawer
+        isOpen={isMixerOpen}
+        onClose={() => setIsMixerOpen(false)}
+        mixerState={mixerState}
+        onMixerChange={setMixerState}
+        onResetMixer={() => setMixerState(DEFAULT_MIXER_STATE)}
       />
 
       {isExportingAudio && (

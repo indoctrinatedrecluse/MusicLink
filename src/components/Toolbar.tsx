@@ -37,6 +37,11 @@ export interface ToolbarProps {
   compiledSequence: CompiledSequence | null;
   isPlaying: boolean;
   isLoaded: boolean;
+  currentTime?: number;
+  totalDurationSecs?: number;
+  onSeek?: (seconds: number) => void;
+  onOpenMixer: () => void;
+  hasMixerModifications?: boolean;
   onPlay: () => void;
   onStop: () => void;
 }
@@ -63,7 +68,10 @@ export function Toolbar({
   onAddStart, onAddMusic, onAddEnd,
   onLoadExamples, onGenerateRandomTrack, onClearCanvas,
   onCompile, onRollVariation,
-  compiledSequence, isPlaying, isLoaded, onPlay, onStop,
+  compiledSequence, isPlaying, isLoaded,
+  currentTime, totalDurationSecs, onSeek,
+  onOpenMixer, hasMixerModifications,
+  onPlay, onStop,
 }: ToolbarProps) {
   return (
     <div className="control-bar">
@@ -83,8 +91,8 @@ export function Toolbar({
         />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '10px' }}>
-        <label htmlFor="volume" style={labelStyle}>Volume:</label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '6px' }}>
+        <label htmlFor="volume" style={labelStyle}>Vol:</label>
         <input
           id="volume"
           type="range"
@@ -92,9 +100,38 @@ export function Toolbar({
           onChange={e => onVolumeChange(Number(e.target.value))}
           min={0}
           max={100}
-          style={{ width: '80px', cursor: 'pointer' }}
+          style={{ width: '70px', cursor: 'pointer' }}
         />
       </div>
+
+      {/* ── Master Instrument Mixer Button ──────────────────────────── */}
+      <button
+        type="button"
+        onClick={onOpenMixer}
+        style={{
+          background: hasMixerModifications ? '#0f766e' : '#334155',
+          color: '#f8fafc',
+          border: hasMixerModifications ? '1px solid #14b8a6' : '1px solid #475569',
+          padding: '6px 10px',
+          borderRadius: '6px',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          marginRight: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px',
+          boxShadow: hasMixerModifications ? '0 0 10px rgba(20, 184, 166, 0.4)' : undefined,
+        }}
+        title="Open Master Instrument Mixer (volume faders, mute, solo for all 8 instruments)"
+      >
+        <span>🎛️ Mixer</span>
+        {hasMixerModifications && (
+          <span style={{ background: '#14b8a6', color: '#042f2e', fontSize: '9px', padding: '1px 4px', borderRadius: '4px', fontWeight: 'bold' }}>
+            ON
+          </span>
+        )}
+      </button>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '10px' }}>
         <label htmlFor="loop" style={labelStyle}>Loop:</label>
@@ -195,6 +232,9 @@ export function Toolbar({
       <MusicPlayer
         isPlaying={isPlaying}
         isLoaded={isLoaded}
+        currentTime={currentTime}
+        totalDurationSecs={totalDurationSecs}
+        onSeek={onSeek}
         onPlay={onPlay}
         onStop={onStop}
       />

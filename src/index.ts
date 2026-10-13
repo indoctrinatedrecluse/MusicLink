@@ -14,6 +14,10 @@ import ex13 from './13_synthwave_drive.json';
 import ex14 from './14_chamber_strings.json';
 import ex15 from './15_funk_brass_groove.json';
 import ex16 from './16_chiptune_boss_battle.json';
+import ex17 from './17_pachelbels_canon.json';
+import ex18 from './18_neon_horizon_odyssey.json';
+import ex19 from './19_autumn_bossa.json';
+import ex20 from './20_vivaldi_winter_allegro.json';
 
 export const exampleSequences = [
   { id: 'ex1', name: 'Fur Elise (Beethoven) - Piano', data: ex1 },
@@ -32,4 +36,8 @@ export const exampleSequences = [
   { id: 'ex14', name: 'Chamber Strings Adagio (Strings, Piano) - Multi', data: ex14 },
   { id: 'ex15', name: 'Funk Horns & Bass Groove (Brass, Bass, Drums) - Multi', data: ex15 },
   { id: 'ex16', name: 'Arcade Boss Battle (8-Bit, Brass, Bass) - Generative Branching', data: ex16 },
+  { id: 'ex17', name: "Pachelbel's Canon in D (Strings, Flute, Piano, Bass) - Epic Baroque", data: ex17 },
+  { id: 'ex18', name: 'Neon Horizon (8-Bit, Bass, Brass, Drums) - Synthwave Odyssey', data: ex18 },
+  { id: 'ex19', name: 'Autumn Bossa (Guitar, Flute, Bass, Drums) - 16-Bar Jazz Standard', data: ex19 },
+  { id: 'ex20', name: "Vivaldi's Winter: Allegro (Strings, Piano, Bass) - 138 BPM Virtuoso", data: ex20 },
 ];

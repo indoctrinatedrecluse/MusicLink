@@ -71,7 +71,12 @@ Traditional Digital Audio Workstations (DAWs) rely strictly on linear horizontal
 - **Loop & Cycle Detection**: Proactively detects circular loops/dependencies, safeguarding the audio engine and displaying user-friendly warnings.
 - **Auto Recompile Invalidation**: Automatically clears compiled sequences upon node or wire changes to guarantee that playback always matches the current canvas state.
 
-### Multi-Instrument Sound Engine & Channel Strip Mixing
+### Multi-Instrument Sound Engine & Master Mixer Console
+- **🎛️ Master Instrument Mixer Console**: A full 8-channel DAW mixing drawer popup providing real-time volume faders, Mute (M), and Solo (S) switches across all 8 instrument voices with instant live audio reactivity.
+- **🔁 Node Loop / Repeat Count**: Configure nodes to repeat $N$ times consecutively (`1x` to `16x`) to compact rhythm grooves, bass loops, and chord ostinatos without canvas clutter.
+- **⏱️ Playback Timeline Scrubber & Seek**: Interactive range slider and live elapsed/total time readout (`0:34 / 1:45`) allowing immediate scrubbing and seeking to any bar in the sequence.
+- **🎨 Instrument-Themed Node Accents**: Dynamically themed headers, accent borders, badges, and handles color-coded by instrument (Emerald for Piano, Amber for Guitar, Sky Blue for Flute, Purple for Bass, Rose for Strings, Gold for Brass, Cyan for 8-Bit, Slate for Drums).
+- **📋 Sub-Graph Duplication & Multi-Node Clipboard**: Press <kbd>Ctrl+D</kbd> to duplicate selected nodes and internal edges, or <kbd>Ctrl+C</kbd> / <kbd>Ctrl+V</kbd> to copy/paste sections across the canvas.
 - **Channel Strip Mixing per Node**: Each Music node includes its own dedicated mixing strip:
   - 🎚️ **Volume Slider**: Adjusts node output gain and scales note velocities (0 – 100%).
   - 🔇 **Mute (M)**: Silences the node without altering canvas topology or visual timeline syncing.
@@ -237,6 +242,9 @@ Nodes and edges follow standard React Flow structures augmented with music-speci
 | Shortcut | Action | Description |
 | :--- | :--- | :--- |
 | <kbd>Space</kbd> | **Play / Stop** | Toggles playback transport on the canvas |
+| <kbd>Ctrl</kbd> + <kbd>D</kbd> | **Duplicate Selection** | Duplicates selected nodes and internal edges (+50px offset) |
+| <kbd>Ctrl</kbd> + <kbd>C</kbd> | **Copy to Clipboard** | Copies selected nodes and internal connections |
+| <kbd>Ctrl</kbd> + <kbd>V</kbd> | **Paste Selection** | Pastes copied nodes with freshly generated IDs |
 | <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> | **Pan Canvas** | Moves the view smoothly across the infinite canvas |
 | <kbd>Mouse Scroll</kbd> | **Zoom In / Out** | Zooms towards the mouse cursor |
 | <kbd>Shift</kbd> + **Click / Drag** | **Multi-Select** | Box-select or click multiple nodes to group them |
@@ -253,7 +261,7 @@ Nodes and edges follow standard React Flow structures augmented with music-speci
 
 ## 📚 Built-In Musical Examples
 
-MusicLink includes 16 full-arc musical examples accessible via the **Load Examples** button:
+MusicLink includes 20 full-arc musical examples accessible via the **Load Examples** button:
 
 1. **Fur Elise (Beethoven)** – *Piano* (Classic recurring A-section motif)
 2. **Moonlight Sonata (Beethoven)** – *Piano* (Arpeggiated C# minor movement)
@@ -271,6 +279,10 @@ MusicLink includes 16 full-arc musical examples accessible via the **Load Exampl
 14. **Chamber Strings Adagio** – *Multi-track* (Lush cinematic Strings Pad and romantic Piano arpeggios in D minor)
 15. **Funk Horns & Bass Groove** – *Multi-track* (Syncopated slap Synth Bass, punchy Brass stabs, and pocket Drums)
 16. **Arcade Boss Battle** – *Generative Branching* (High-tempo 8-Bit Lead, Brass fanfare, and chance branching)
+17. **Pachelbel's Canon in D** – *Epic Baroque Chamber* (4 parallel polyphonic voices: Strings, Flute, Piano, Bass across 24 nodes)
+18. **Neon Horizon** – *Synthwave Odyssey* (Multi-section song structure with 16th rolling bass, 8-Bit leads, Brass stabs, electro drums, and `🎲 50%` solo branching)
+19. **Autumn Bossa** – *16-Bar Complex Jazz Standard* (Extended jazz harmony `Cm7-F7-Bbmaj7-Ebmaj7-Am7b5-D7-Gm7`, walking bass, syncopated guitar comping, bossa drums, flute improvisation)
+20. **Vivaldi's Winter: Allegro** – *138 BPM Virtuoso Baroque* (Shivering 16th-note string tremolos, soaring scales, driving bass pedal points, dramatic pauses)
 
 ---
 
